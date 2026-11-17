@@ -1,0 +1,15 @@
+[Unit]
+Description=Hosting Panel Database Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/dbmanager --socket /run/hostingpanel/db.sock --db /var/lib/hostingpanel/db.db
+Restart=always
+RestartSec=2
+User=root
+# Sockets are created group-owned by hostingpanel so the Panel (member of that group) can reach them.
+Group=hostingpanel
+StateDirectory=hostingpanel
+
+[Install]
+WantedBy=multi-user.target

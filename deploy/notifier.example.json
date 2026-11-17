@@ -1,0 +1,13 @@
+{
+  "telegram": { "token": "123456:ABC...", "chat_id": "123456789" },
+  "smtp": { "host": "smtp.example.com", "port": 587, "user": "alerts@example.com", "pass": "secret", "from": "alerts@example.com", "to": "you@example.com" },
+  "interval_seconds": 30,
+  "fail_threshold": 2,
+  "disk_percent": 90,
+  "checks": [
+    { "name": "Core service", "kind": "unix-http", "target": "/run/hostingpanel/core.sock|/v1/health" },
+    { "name": "Panel", "kind": "http", "target": "https://panel.example.com/login" },
+    { "name": "nginx", "kind": "systemd", "target": "nginx" },
+    { "name": "MariaDB", "kind": "systemd", "target": "mariadb" }
+  ]
+}

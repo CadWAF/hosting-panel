@@ -1,0 +1,10 @@
+.DS_Store
+/dist/
+/panel/vendor/
+/panel/node_modules/
+/panel/public/build/
+/panel/.env
+/panel/database/*.sqlite
+/panel/storage/logs/*
+/panel/storage/framework/*/*
+.phpunit.result.cache

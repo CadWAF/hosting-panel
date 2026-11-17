@@ -1,0 +1,15 @@
+[Unit]
+Description=Hosting Panel web (dedicated php-fpm)
+After=network.target
+
+[Service]
+Type=notify
+ExecStartPre=/usr/bin/install -d -m 0755 /run/php
+ExecStart=/usr/sbin/php-fpm8.4 --nodaemonize --fpm-config /etc/hostingpanel/panel-fpm.conf
+ExecReload=/bin/kill -USR2 $MAINPID
+RuntimeDirectory=hostingpanel-fpm
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

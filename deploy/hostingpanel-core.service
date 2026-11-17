@@ -1,0 +1,14 @@
+[Unit]
+Description=Hosting Panel Core Agent
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/core-agent --socket /run/hostingpanel/core.sock --db /var/lib/hostingpanel/core.db --default-php 8.3 --socket-gid %GID%
+Restart=always
+RestartSec=2
+User=root
+# The socket's group is set with --socket-gid so the Panel can reach it; the agent itself must not run with that group.
+StateDirectory=hostingpanel
+
+[Install]
+WantedBy=multi-user.target

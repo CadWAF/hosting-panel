@@ -1,0 +1,15 @@
+[Unit]
+Description=Hosting Panel Mail Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/mail-service --socket /run/hostingpanel/mail.sock --state /var/lib/hostingpanel/mail
+Restart=always
+RestartSec=2
+User=root
+# Sockets are created group-owned by hostingpanel so the Panel (member of that group) can reach them.
+Group=hostingpanel
+StateDirectory=hostingpanel
+
+[Install]
+WantedBy=multi-user.target

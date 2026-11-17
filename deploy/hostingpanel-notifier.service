@@ -1,0 +1,14 @@
+[Unit]
+Description=Hosting Panel Notifier (independent of the panel)
+After=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/notifier --config /etc/hostingpanel/notifier.json --socket /run/hostingpanel/notifier.sock
+Restart=always
+RestartSec=5
+# Needs no privileges beyond reading its config and calling systemctl is-active.
+User=hostingpanel-notifier
+Group=hostingpanel
+
+[Install]
+WantedBy=multi-user.target

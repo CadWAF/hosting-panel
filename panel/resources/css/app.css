@@ -1,0 +1,109 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '../fonts/fonts.css';
+
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../js/**/*.vue';
+
+@custom-variant dark (&:is(.dark *));
+
+/* MyGameHost design tokens (blue accent, 1px borders, small radii), exposed as shadcn semantic colors. */
+:root {
+    --radius: 0.5rem;
+    --background: oklch(0.975 0.004 265);
+    --foreground: oklch(0.2 0.03 265);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.2 0.03 265);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.2 0.03 265);
+    --primary: oklch(0.47 0.2 264);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.955 0.006 265);
+    --secondary-foreground: oklch(0.25 0.03 265);
+    --muted: oklch(0.955 0.006 265);
+    --muted-foreground: oklch(0.52 0.02 265);
+    --accent: oklch(0.955 0.012 265);
+    --accent-foreground: oklch(0.25 0.03 265);
+    --destructive: oklch(0.55 0.22 27);
+    --success: oklch(0.52 0.14 150);
+    --warning: oklch(0.6 0.15 70);
+    --border: oklch(0.925 0.006 265);
+    --input: oklch(0.88 0.008 265);
+    --ring: oklch(0.55 0.18 264);
+    --sidebar: oklch(0.16 0.03 265);
+    --sidebar-foreground: oklch(0.96 0.005 265);
+    --sidebar-muted: oklch(0.72 0.02 265);
+    --sidebar-accent: oklch(0.26 0.06 265);
+    --sidebar-border: oklch(0.26 0.02 265);
+    --sidebar-primary: oklch(0.65 0.18 262);
+}
+.dark {
+    --background: oklch(0.145 0.025 265);
+    --foreground: oklch(0.94 0.008 265);
+    --card: oklch(0.185 0.028 265);
+    --card-foreground: oklch(0.94 0.008 265);
+    --popover: oklch(0.2 0.03 265);
+    --popover-foreground: oklch(0.94 0.008 265);
+    --primary: oklch(0.66 0.17 262);
+    --primary-foreground: oklch(0.15 0.03 265);
+    --secondary: oklch(0.23 0.03 265);
+    --secondary-foreground: oklch(0.94 0.008 265);
+    --muted: oklch(0.23 0.03 265);
+    --muted-foreground: oklch(0.7 0.02 265);
+    --accent: oklch(0.26 0.04 265);
+    --accent-foreground: oklch(0.94 0.008 265);
+    --destructive: oklch(0.7 0.19 22);
+    --success: oklch(0.75 0.15 155);
+    --warning: oklch(0.8 0.15 80);
+    --border: oklch(0.27 0.03 265);
+    --input: oklch(0.32 0.03 265);
+    --ring: oklch(0.66 0.17 262);
+    --sidebar: oklch(0.12 0.025 265);
+}
+
+@theme inline {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-muted: var(--sidebar-muted);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-primary: var(--sidebar-primary);
+}
+
+@layer base {
+    * { @apply border-border outline-ring/50; }
+    html { font-feature-settings: 'cv11', 'ss01'; -webkit-font-smoothing: antialiased; }
+    body { @apply bg-background text-foreground font-sans text-[15px] leading-relaxed; }
+    code, pre, kbd { font-family: var(--font-mono); }
+}
+
+@media (prefers-contrast: more) {
+    :root, .dark { --border: currentColor; --muted-foreground: var(--foreground); }
+}

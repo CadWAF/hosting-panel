@@ -1,0 +1,222 @@
+{
+  "version": 2,
+  "skills": {
+    "baseline-ui": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/baseline-ui/SKILL.md",
+      "computedHash": "cf7e1258de59feacc35bd7d9cf9628dce457e0217ef05f30682f0fc417fe9367"
+    },
+    "complexity-guardrails": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/complexity-guardrails/SKILL.md",
+      "computedHash": "d001e20d9aa3f168b0ecbe211be04ba390a61e3ea8448e3eab15832af7b0cafb"
+    },
+    "laravel-api": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-api/SKILL.md",
+      "computedHash": "731090ba6c0e98d62d44e4d15565a923cbb50989f56bc28d961b39428bfdad2c"
+    },
+    "laravel-api-resources-and-pagination": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-api-resources-and-pagination/SKILL.md",
+      "computedHash": "d3af4657435c2e6d560718d80e433a8373847c79105dd5462547e41040905c68"
+    },
+    "laravel-config-env-storage": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-config-env-storage/SKILL.md",
+      "computedHash": "bdd91f18da90c1d84250e95a0e194cebedb9d511b868d75871f116e39feb8cfa"
+    },
+    "laravel-constants-and-configuration": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-constants-and-configuration/SKILL.md",
+      "computedHash": "98db38ca42c2b886ee383dc575b385448f01444e0bca0f2967cdb7cb507a4a9b"
+    },
+    "laravel-controller-cleanup": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-controller-cleanup/SKILL.md",
+      "computedHash": "475ca68916ed69000f24b3479ceec14456e1f01e9370d4df74b66e5b68e48647"
+    },
+    "laravel-controller-tests": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-controller-tests/SKILL.md",
+      "computedHash": "caedfe1378db82ace63ac15010375325a9ce6c66ff8fda2fc5f8ce3912c3a2cb"
+    },
+    "laravel-custom-helpers": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-custom-helpers/SKILL.md",
+      "computedHash": "59b757a41b9d06d0173080e3e9da0ec4c7fd2df1bb731979d58e17dbe37b7c09"
+    },
+    "laravel-data-chunking-large-datasets": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-data-chunking-large-datasets/SKILL.md",
+      "computedHash": "171ce9d02c03dc573f8ff2cfeb5c39c590ac7ae4700f4d8a8e73451b46cda531"
+    },
+    "laravel-debugging-prompts": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-debugging-prompts/SKILL.md",
+      "computedHash": "0af5e41e47d95e528c9d43692903a5a2792cbe60ab6ad5469873b46f44c79bda"
+    },
+    "laravel-dependencies-trim-packages": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-dependencies-trim-packages/SKILL.md",
+      "computedHash": "b0a7bc5a2ca643e9575af1c18254b6da1c064a57ce10470ae1fc6974eaeda471"
+    },
+    "laravel-filesystem-uploads": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-filesystem-uploads-and-urls/SKILL.md",
+      "computedHash": "79fd79b5b3983e24e6801df8bc96be0dd9d5bc7ca75a4ad6bead1160bbc51594"
+    },
+    "laravel-interfaces-and-di": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-interfaces-and-di/SKILL.md",
+      "computedHash": "eb8885c896e376fbe96ce87dc224c7d98136c224224ed5c76666406081d25ba2"
+    },
+    "laravel-internationalization-and-translation": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-internationalization-and-translation/SKILL.md",
+      "computedHash": "52930315005ffb12664cc00d842c1841d0da18e7cf3d72d5342fbdb28562f1f3"
+    },
+    "laravel-iterating-on-code": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-iterating-on-code/SKILL.md",
+      "computedHash": "eeb1cc57fe218dab59ee2b4f8c77f0551392ab32d998d76065c9457ce9a6cd20"
+    },
+    "laravel-laravel-prompting-patterns": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-prompting-patterns/SKILL.md",
+      "computedHash": "4aa9b2a9ca39c6591d6ffb393d58278d3e8c5d38e624ef392a77f44b169fd7bd"
+    },
+    "laravel-migrations-and-factories": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-migrations-and-factories/SKILL.md",
+      "computedHash": "d5bb07bcf77a6716ef6aa7dae909b6dfce19d0f19c6a7476d9560bfbe27792c6"
+    },
+    "laravel-performance-caching": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-performance-caching/SKILL.md",
+      "computedHash": "ee36af3b45929245a7f1ff3ce95d6abd1e3f194a4e6ee3b27f5dd2a7f49b40ea"
+    },
+    "laravel-performance-eager-loading": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-performance-eager-loading/SKILL.md",
+      "computedHash": "d6a885178e9a11aaf911fd3f78b5a32b40aa87aed2e2a9e573ddd212d88eaf26"
+    },
+    "laravel-performance-select-columns": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-performance-select-columns/SKILL.md",
+      "computedHash": "daec787da91ca06e3feffc286491ad642eccbc55a39477dff193466ec177a5cc"
+    },
+    "laravel-policies-and-authorization": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-policies-and-authorization/SKILL.md",
+      "computedHash": "7f70c66c2508bb01975070988eaffb285a8c075068e991c07ee08c5987a62c2f"
+    },
+    "laravel-quality-checks": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-quality-checks/SKILL.md",
+      "computedHash": "75bdc82df0b4849d46da52c400a616d0d165a74a83e56476887a5af90112290b"
+    },
+    "laravel-rate-limiting": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-rate-limiting-and-throttle/SKILL.md",
+      "computedHash": "221e6dce0cc0b51c473711f11751535957e8dd196031f4b208f8d3ecb6673dd4"
+    },
+    "laravel-routes-best-practices": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-routes-best-practices/SKILL.md",
+      "computedHash": "c3744fbeb63f60ec6bd3196a7c8c3be6eb054153c5efbb48192c0e6afdcdb221"
+    },
+    "laravel-strategy-pattern": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-strategy-pattern/SKILL.md",
+      "computedHash": "ecb574916fc359cc59cc744b6c2b93f1976b2f289c9067fdbba5ef5c42414467"
+    },
+    "laravel-task-scheduling": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-task-scheduling/SKILL.md",
+      "computedHash": "b0d0eb68c66bb36ae1455c1d237914c639e938f41167b10fc160b297633d4e27"
+    },
+    "laravel-template-method-and-plugins": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-template-method-and-plugins/SKILL.md",
+      "computedHash": "97205e7c01b3440729ff936bb37c0e6d358586704fe2a223d6b793925da53a0e"
+    },
+    "laravel-transactions-and-consistency": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-transactions-and-consistency/SKILL.md",
+      "computedHash": "9bdaf7182e35a4283059bf6cdc73d3ccc2b863925c3b8b6021ebb5d0db997219"
+    },
+    "shadcn-vue": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn-vue/SKILL.md",
+      "computedHash": "ebe00a73379115fbf77b80d0b2a63b95f85c48c1e80fec74c7ef0f6d3ee89f5f"
+    },
+    "vue3-component-decomposition": {
+      "source": "noartem/skills",
+      "commit": "4d170ea617462177852ab0a788597111b471dbd9",
+      "sourceType": "github",
+      "skillPath": "skills/vue3-component-decomposition/SKILL.md",
+      "computedHash": "e35a42d969c00c9a68eff8656871b50ed37c5ccae9654235863491ab76d41216"
+    }
+  }
+}
