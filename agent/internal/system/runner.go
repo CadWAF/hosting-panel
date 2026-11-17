@@ -20,6 +20,9 @@ type Runner interface {
 	RunEnvW(w io.Writer, env []string, dir, name string, args ...string) error
 	// RunIn runs a command feeding stdin (keeps secrets and SQL out of argv).
 	RunIn(stdin string, name string, args ...string) error
+	// Output runs a command and returns its stdout. On failure it returns whatever stdout was produced plus an
+	// error carrying stderr, because tools such as dpkg-query and fail2ban-client print useful output and still exit non-zero.
+	Output(name string, args ...string) (string, error)
 }
 
 // ExecRunner runs real commands.
@@ -32,6 +35,18 @@ func (ExecRunner) Run(name string, args ...string) error {
 	}
 	return nil
 }
+
+func (ExecRunner) Output(name string, args ...string) (string, error) {
+	var out, errb strings.Builder
+	c := exec.Command(name, args...)
+	c.Stdout, c.Stderr = &out, &errb
+	if err := c.Run(); err != nil {
+		return out.String(), fmt.Errorf("%s %s: %w: %s", name, strings.Join(args, " "), err, strings.TrimSpace(errb.String()))
+	}
+	return out.String(), nil
+}
+
+func (d *DryRunner) Output(name string, args ...string) (string, error) { return "", d.Run(name, args...) }
 
 func (ExecRunner) RunW(w io.Writer, name string, args ...string) error {
 	c := exec.Command(name, args...)

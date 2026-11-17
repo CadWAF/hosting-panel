@@ -81,6 +81,7 @@ if [ ! -f /etc/hostingpanel/notifier.json ]; then
     { "name": "Database service", "kind": "systemd", "target": "hostingpanel-dbmanager" },
     { "name": "Backup service", "kind": "systemd", "target": "hostingpanel-backup" },
     { "name": "Mail service", "kind": "systemd", "target": "hostingpanel-mail" },
+    { "name": "System service", "kind": "systemd", "target": "hostingpanel-system" },
     { "name": "nginx", "kind": "systemd", "target": "nginx" }
   ]
 }
@@ -88,11 +89,11 @@ JSON
   chgrp hostingpanel /etc/hostingpanel/notifier.json; chmod 0640 /etc/hostingpanel/notifier.json
 fi
 GID="$(getent group hostingpanel | cut -d: -f3)"
-for u in core dbmanager backup mail notifier; do
+for u in core dbmanager backup mail system notifier; do
   sed "s/%GID%/$GID/" "$HERE/deploy/hostingpanel-$u.service" > "/etc/systemd/system/hostingpanel-$u.service"
 done
 systemctl daemon-reload
-systemctl enable --now hostingpanel-core hostingpanel-dbmanager hostingpanel-backup hostingpanel-mail hostingpanel-notifier
+systemctl enable --now hostingpanel-core hostingpanel-dbmanager hostingpanel-backup hostingpanel-mail hostingpanel-system hostingpanel-notifier
 
 cat <<MSG
 

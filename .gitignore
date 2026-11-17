@@ -8,3 +8,4 @@
 /panel/storage/logs/*
 /panel/storage/framework/*/*
 .phpunit.result.cache
+/dev/bin/

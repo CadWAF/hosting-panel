@@ -1,0 +1,15 @@
+# Development stack: `docker compose -f dev/docker-compose.yml up`  ->  http://localhost:8200
+name: hp-dev
+services:
+  panel:
+    image: php:8.4-cli
+    working_dir: /app
+    ports: ["8200:8200"]
+    environment:
+      PANEL_CORE_SOCKET: /run/hostingpanel/core.sock
+      PANEL_SYSTEM_SOCKET: /run/hostingpanel/system.sock
+    volumes:
+      - ../panel:/app
+      - ./bin:/bin/hp:ro
+      - ./start.sh:/start.sh:ro
+    command: ["/bin/sh", "/start.sh"]

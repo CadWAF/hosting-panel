@@ -1,0 +1,15 @@
+[Unit]
+Description=Hosting Panel System Service (monitoring, software, firewall, fail2ban, Docker, FTP)
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/system-service --socket /run/hostingpanel/system.sock --state /var/lib/hostingpanel/system
+Restart=always
+RestartSec=2
+User=root
+# The socket is group-owned by hostingpanel so the Panel (member of that group) can reach it.
+Group=hostingpanel
+StateDirectory=hostingpanel
+
+[Install]
+WantedBy=multi-user.target
