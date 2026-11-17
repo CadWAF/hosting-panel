@@ -6,7 +6,7 @@ export function bytes(n: number): string {
         n /= 1024;
         i++;
     }
-    return `${i ? n.toFixed(1) : n} ${u[i]}`;
+    return `${i ? n.toFixed(1) : Math.round(n)} ${u[i]}`;
 }
 
 export function ago(iso?: string | null): string {
@@ -21,4 +21,15 @@ export function ago(iso?: string | null): string {
 
 export function when(iso?: string | null): string {
     return iso && !iso.startsWith('0001') ? new Date(iso).toLocaleString() : '–';
+}
+
+export function duration(sec: number): string {
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : `${m}m`;
+}
+
+export function rate(n: number): string {
+    return `${bytes(n)}/s`;
 }

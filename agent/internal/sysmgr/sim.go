@@ -43,8 +43,8 @@ func NewSim(root string) *Sim {
 		active: map[string]bool{"nginx.service": true, "ssh.service": true, "cron.service": true, "hostingpanel-core.service": true,
 			"hostingpanel-panel-fpm.service": true, "hostingpanel-system.service": true, "hostingpanel-mail.service": true,
 			"hostingpanel-backup.service": true, "hostingpanel-dbmanager.service": true, "hostingpanel-notifier.service": true},
-		bans:   map[string][]string{"sshd": {"185.224.128.17", "45.141.84.210"}},
-		totals: map[string]int{"sshd": 14},
+		bans:    map[string][]string{"sshd": {"185.224.128.17", "45.141.84.210"}},
+		totals:  map[string]int{"sshd": 14},
 		f2bLive: map[string]bool{},
 		upgrades: []string{
 			"openssl/noble-updates,noble-security 3.0.13-0ubuntu3.5 amd64 [upgradable from: 3.0.13-0ubuntu3.4]",
@@ -303,7 +303,10 @@ func (s *Sim) fail2ban(a []string) (string, error) {
 		return fmt.Sprintf("Status for the jail: %s\n|- Filter\n|  |- Currently failed:\t%d\n|  |- Total failed:\t%d\n|  `- File list:\t/var/log/auth.log\n`- Actions\n   |- Currently banned:\t%d\n   |- Total banned:\t%d\n   `- Banned IP list:\t%s\n",
 			j, len(ips)+2, s.totals[j]+30, len(ips), s.totals[j], strings.Join(ips, " ")), nil
 	case "get":
-		d := ini(func() string { b, _ := os.ReadFile(s.path("/etc/fail2ban/jail.d/hp-" + a[1] + ".local")); return string(b) }())
+		d := ini(func() string {
+			b, _ := os.ReadFile(s.path("/etc/fail2ban/jail.d/hp-" + a[1] + ".local"))
+			return string(b)
+		}())
 		v := d[a[2]]
 		if v == "" {
 			v = map[string]string{"bantime": "3600", "findtime": "600", "maxretry": "5"}[a[2]]

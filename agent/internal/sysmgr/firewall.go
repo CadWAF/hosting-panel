@@ -250,10 +250,10 @@ func (m *Manager) DisableFirewall() error {
 // --- SSH ---
 
 type SSHSettings struct {
-	Port          int    `json:"port"`
-	RootLogin     string `json:"root_login"`    // yes | prohibit-password | no
-	PasswordAuth  bool   `json:"password_auth"` // password logins for non-site users
-	HasRootKey    bool   `json:"has_root_key"`
+	Port         int    `json:"port"`
+	RootLogin    string `json:"root_login"`    // yes | prohibit-password | no
+	PasswordAuth bool   `json:"password_auth"` // password logins for non-site users
+	HasRootKey   bool   `json:"has_root_key"`
 }
 
 const sshDropIn = "/etc/ssh/sshd_config.d/00-hostingpanel.conf"

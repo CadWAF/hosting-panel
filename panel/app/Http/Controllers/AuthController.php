@@ -82,4 +82,12 @@ class AuthController extends Controller
 
         return Inertia::location(route('login'));
     }
+
+    /** Remember the interface language in a cookie; the frontend holds the dictionaries. */
+    public function locale(Request $r): \Illuminate\Http\Response
+    {
+        $l = $r->input('locale') === 'ru' ? 'ru' : 'en';
+
+        return response()->noContent()->cookie('hp_locale', $l, 60 * 24 * 365, '/', null, $r->isSecure(), false, false, 'lax');
+    }
 }

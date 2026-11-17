@@ -6,6 +6,7 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { buttonVariants } from '@/components/ui/button';
+import { useI18n } from '@/composables/useI18n';
 
 const props = defineProps<{
     title: string;
@@ -17,6 +18,7 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { default: false });
 const emit = defineEmits<{ confirm: [] }>();
 
+const { t } = useI18n();
 const typed = ref('');
 watch(open, (v) => v && (typed.value = ''));
 const ready = computed(() => !props.typeName || typed.value === props.typeName);
@@ -30,13 +32,13 @@ const ready = computed(() => !props.typeName || typed.value === props.typeName);
                 <AlertDialogDescription>{{ description }}</AlertDialogDescription>
             </AlertDialogHeader>
             <Field v-if="typeName">
-                <FieldLabel for="confirm-name">Type <code class="text-foreground">{{ typeName }}</code> to confirm</FieldLabel>
+                <FieldLabel for="confirm-name">{{ t('Type') }} <code class="text-foreground">{{ typeName }}</code> {{ t('to confirm') }}</FieldLabel>
                 <Input id="confirm-name" v-model="typed" autocomplete="off" />
             </Field>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{{ t('Cancel') }}</AlertDialogCancel>
                 <AlertDialogAction :class="buttonVariants({ variant: 'destructive' })" :disabled="!ready" @click="emit('confirm')">
-                    {{ confirmLabel ?? 'Delete' }}
+                    {{ confirmLabel ?? t('Delete') }}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>

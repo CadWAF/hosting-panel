@@ -10,7 +10,7 @@ export interface TaskInfo {
 }
 
 /** Follow a long-running Task until it finishes; calls `onDone` once with the final state. */
-export function useTask(service: 'core' | 'db' | 'backup' | 'mail', onDone?: (t: TaskInfo) => void) {
+export function useTask(service: 'core' | 'db' | 'backup' | 'mail' | 'system', onDone?: (t: TaskInfo) => void) {
     const task = ref<TaskInfo | null>(null);
     let timer: ReturnType<typeof setTimeout> | undefined;
     let current = '';

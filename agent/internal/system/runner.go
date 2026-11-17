@@ -46,7 +46,9 @@ func (ExecRunner) Output(name string, args ...string) (string, error) {
 	return out.String(), nil
 }
 
-func (d *DryRunner) Output(name string, args ...string) (string, error) { return "", d.Run(name, args...) }
+func (d *DryRunner) Output(name string, args ...string) (string, error) {
+	return "", d.Run(name, args...)
+}
 
 func (ExecRunner) RunW(w io.Writer, name string, args ...string) error {
 	c := exec.Command(name, args...)

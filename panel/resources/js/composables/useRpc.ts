@@ -18,7 +18,7 @@ async function post(url: string, body: BodyInit, json = true): Promise<Response>
 }
 
 /** Call a Service operation through the Panel. Never throws: network and server problems become `ok: false`. */
-export async function rpc<T = any>(service: 'core' | 'db' | 'backup' | 'mail', method: string, ...args: unknown[]): Promise<RpcResult<T>> {
+export async function rpc<T = any>(service: 'core' | 'db' | 'backup' | 'mail' | 'system', method: string, ...args: unknown[]): Promise<RpcResult<T>> {
     try {
         const r = await post('/rpc', JSON.stringify({ service, method, args }));
         if (r.status === 401 || r.status === 419) {

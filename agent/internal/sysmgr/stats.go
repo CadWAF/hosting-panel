@@ -39,20 +39,20 @@ type Proc struct {
 }
 
 type Stats struct {
-	Hostname  string  `json:"hostname"`
-	OS        string  `json:"os"`
-	Kernel    string  `json:"kernel"`
-	Cores     int     `json:"cores"`
-	Uptime    int64   `json:"uptime"`
+	Hostname  string     `json:"hostname"`
+	OS        string     `json:"os"`
+	Kernel    string     `json:"kernel"`
+	Cores     int        `json:"cores"`
+	Uptime    int64      `json:"uptime"`
 	Load      [3]float64 `json:"load"`
-	Now       Point   `json:"now"`
-	MemTotal  uint64  `json:"mem_total"`
-	MemUsed   uint64  `json:"mem_used"`
-	SwapTotal uint64  `json:"swap_total"`
-	SwapUsed  uint64  `json:"swap_used"`
-	Disks     []Disk  `json:"disks"`
-	Procs     []Proc  `json:"procs"`
-	History   []Point `json:"history"`
+	Now       Point      `json:"now"`
+	MemTotal  uint64     `json:"mem_total"`
+	MemUsed   uint64     `json:"mem_used"`
+	SwapTotal uint64     `json:"swap_total"`
+	SwapUsed  uint64     `json:"swap_used"`
+	Disks     []Disk     `json:"disks"`
+	Procs     []Proc     `json:"procs"`
+	History   []Point    `json:"history"`
 }
 
 type cpuTimes struct{ idle, total uint64 }
@@ -242,8 +242,8 @@ func disks() []Disk {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		p := strings.Fields(sc.Text())
-		if len(p) < 3 || !strings.HasPrefix(p[0], "/dev/") || strings.HasPrefix(p[0], "/dev/loop") || seen[p[0]] {
-			continue
+		if len(p) < 3 || !strings.HasPrefix(p[0], "/dev/") || strings.HasPrefix(p[0], "/dev/loop") || seen[p[0]] || strings.HasPrefix(p[1], "/etc/") || strings.HasPrefix(p[1], "/var/lib/docker/") {
+			continue // device already listed, or a container bind mount
 		}
 		var st syscall.Statfs_t
 		if syscall.Statfs(p[1], &st) != nil {

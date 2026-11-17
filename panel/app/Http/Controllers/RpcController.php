@@ -7,6 +7,7 @@ use App\Services\CoreAgent;
 use App\Services\CoreAgentUnavailable;
 use App\Services\DbManagerClient;
 use App\Services\MailClient;
+use App\Services\SystemClient;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -23,6 +24,10 @@ class RpcController extends Controller
             'cron', 'addCron', 'removeCron', 'log', 'files', 'readFile', 'writeFile', 'fileOp']],
         'db' => [DbManagerClient::class, ['installEngine', 'createDatabase', 'resetPassword', 'deleteDatabase', 'task']],
         'backup' => [BackupClient::class, ['addDestination', 'testDestination', 'deleteDestination', 'addJob', 'deleteJob', 'runJob', 'restore', 'installBorg', 'task']],
+        'system' => [SystemClient::class, ['stats', 'services', 'installSoftware', 'removeSoftware', 'serviceAction', 'setJail', 'setF2bDefaults', 'ban', 'unban',
+            'enableFirewall', 'disableFirewall', 'addRule', 'deleteRule', 'setSsh', 'checkUpdates', 'applyUpdates', 'reboot', 'addCron', 'updateCron',
+            'deleteCron', 'runCron', 'readLog', 'runContainer', 'containerAction', 'containerLog', 'pullImage', 'removeImage', 'addFtp',
+            'setFtpPassword', 'deleteFtp', 'openFtpPorts', 'task']],
         'mail' => [MailClient::class, ['saveSettings', 'install', 'addDomain', 'deleteDomain', 'dns', 'addMailbox', 'setPassword', 'deleteMailbox', 'webmail', 'task']],
     ];
 
