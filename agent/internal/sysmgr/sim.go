@@ -198,6 +198,18 @@ func (s *Sim) systemctl(a []string) (string, error) {
 	if len(a) == 0 {
 		return "", nil
 	}
+	now := false
+	if a[0] == "enable" || a[0] == "disable" {
+		rest := []string{a[0]}
+		for _, x := range a[1:] {
+			if x == "--now" {
+				now = true
+			} else {
+				rest = append(rest, x)
+			}
+		}
+		a = rest
+	}
 	switch a[0] {
 	case "is-active":
 		var b strings.Builder
@@ -260,8 +272,14 @@ func (s *Sim) systemctl(a []string) (string, error) {
 		s.active[a[1]] = false
 	case "enable":
 		s.enabled[a[1]] = true
+		if now {
+			s.active[a[1]] = true
+		}
 	case "disable":
 		s.enabled[a[1]] = false
+		if now {
+			s.active[a[1]] = false
+		}
 	case "reboot":
 		s.lastBoot = time.Now()
 	}

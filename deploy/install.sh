@@ -29,6 +29,12 @@ chmod 0711 /srv/sites
 # Binaries.
 install -m 0755 "$HERE"/bin/* /usr/local/bin/
 
+# CadWAF eBPF firewall installer files (optional; installed later from the panel's Security page).
+if [ -d "$HERE/firewall" ]; then
+  mkdir -p /usr/share/hostingpanel
+  rsync -a --delete "$HERE/firewall/" /usr/share/hostingpanel/firewall/
+fi
+
 # Panel.
 mkdir -p /opt/hostingpanel
 rsync -a --delete --exclude .env --exclude storage/ --exclude 'database/*.sqlite' "$HERE/panel/" /opt/hostingpanel/panel/

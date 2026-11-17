@@ -86,7 +86,8 @@ async function unit(i: Item, action: string) {
                 </div>
                 <p class="text-muted-foreground flex-1 text-sm text-pretty">{{ t(i.description) }}<span v-if="i.detail && !i.installed" class="mt-1 block text-xs">{{ t(i.detail) }}</span></p>
                 <div class="flex flex-wrap items-center gap-2">
-                    <Button v-if="!i.installed" size="sm" :disabled="busy === i.id || task?.status === 'running'" @click="install(i)"><DownloadIcon /> {{ t('Install') }}</Button>
+                    <Button v-if="!i.installed && i.manage && i.id === 'cadwaf'" as-child size="sm"><Link :href="i.manage"><SettingsIcon /> {{ t('Set up') }}</Link></Button>
+                    <Button v-else-if="!i.installed" size="sm" :disabled="busy === i.id || task?.status === 'running'" @click="install(i)"><DownloadIcon /> {{ t('Install') }}</Button>
                     <template v-else>
                         <Button v-if="i.manage" as-child size="sm"><Link :href="i.manage"><SettingsIcon /> {{ t('Manage') }}</Link></Button>
                         <template v-if="i.units.length">

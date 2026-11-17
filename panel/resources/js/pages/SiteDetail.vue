@@ -9,6 +9,8 @@ import SshTab from '@/components/site/SshTab.vue';
 import CronTab from '@/components/site/CronTab.vue';
 import LogsTab from '@/components/site/LogsTab.vue';
 import HttpsTab from '@/components/site/HttpsTab.vue';
+import WebTab from '@/components/site/WebTab.vue';
+import ComposerTab from '@/components/site/ComposerTab.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useI18n } from '@/composables/useI18n';
 
@@ -34,12 +36,16 @@ function onTab(v: string | number) {
     <Tabs v-else :model-value="tab" @update:model-value="onTab">
         <TabsList class="flex-wrap">
             <TabsTrigger value="files">{{ t('Files') }}</TabsTrigger>
+            <TabsTrigger value="web">{{ t('Web') }}</TabsTrigger>
+            <TabsTrigger value="composer">Composer</TabsTrigger>
             <TabsTrigger value="ssh">{{ t('SSH') }}</TabsTrigger>
             <TabsTrigger value="cron">{{ t('Cron') }}</TabsTrigger>
             <TabsTrigger value="logs">{{ t('Logs') }}</TabsTrigger>
             <TabsTrigger value="https">{{ t('HTTPS') }}</TabsTrigger>
         </TabsList>
         <TabsContent value="files" class="mt-4"><FilesTab :domain="domain" /></TabsContent>
+        <TabsContent value="web" class="mt-4"><WebTab :domain="domain" /></TabsContent>
+        <TabsContent value="composer" class="mt-4"><ComposerTab :domain="domain" /></TabsContent>
         <TabsContent value="ssh" class="mt-4"><SshTab :domain="domain" /></TabsContent>
         <TabsContent value="cron" class="mt-4"><CronTab :domain="domain" /></TabsContent>
         <TabsContent value="logs" class="mt-4"><LogsTab :domain="domain" /></TabsContent>

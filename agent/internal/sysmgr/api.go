@@ -130,6 +130,74 @@ func (m *Manager) Handler() http.Handler {
 		}
 	})
 
+	// CadWAF eBPF firewall.
+	mux.HandleFunc("GET /v1/cadwaf", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]any{"data": m.CadWAF()}) })
+	mux.HandleFunc("POST /v1/cadwaf/install", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			AllowIP string `json:"allow_ip"`
+		}
+		if body(w, r, &in) {
+			t, err := m.InstallCadWAF(in.AllowIP)
+			done(w, 202, t, err)
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/remove", func(w http.ResponseWriter, r *http.Request) {
+		t, err := m.RemoveCadWAF()
+		done(w, 202, t, err)
+	})
+	mux.HandleFunc("PUT /v1/cadwaf/ports", func(w http.ResponseWriter, r *http.Request) {
+		var in CWPorts
+		if body(w, r, &in) {
+			done(w, 200, nil, m.SetCWPorts(in))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/ips/{list}", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			IP string `json:"ip"`
+		}
+		if body(w, r, &in) {
+			done(w, 201, nil, m.AddCWIP(r.PathValue("list"), in.IP))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/ips/{list}/delete", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			IP string `json:"ip"`
+		}
+		if body(w, r, &in) {
+			done(w, 200, nil, m.DeleteCWIP(r.PathValue("list"), in.IP))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/rules", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Rule string `json:"rule"`
+			File string `json:"file"`
+		}
+		if body(w, r, &in) {
+			done(w, 201, nil, m.AddCWRule(in.Rule, in.File))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/rules/delete", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			ID   int    `json:"id"`
+			File string `json:"file"`
+		}
+		if body(w, r, &in) {
+			done(w, 200, nil, m.DeleteCWRule(in.ID, in.File))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/reload", func(w http.ResponseWriter, r *http.Request) { done(w, 200, nil, m.ReloadCW()) })
+	mux.HandleFunc("POST /v1/cadwaf/egress", func(w http.ResponseWriter, r *http.Request) {
+		var in struct {
+			Enabled bool `json:"enabled"`
+		}
+		if body(w, r, &in) {
+			done(w, 200, nil, m.SetCWEgress(in.Enabled))
+		}
+	})
+	mux.HandleFunc("POST /v1/cadwaf/service/{action}", func(w http.ResponseWriter, r *http.Request) {
+		done(w, 200, nil, m.CWService(r.PathValue("action")))
+	})
+
 	// Updates.
 	mux.HandleFunc("GET /v1/updates", func(w http.ResponseWriter, r *http.Request) { respond(w, 200, map[string]any{"data": m.Updates()}) })
 	mux.HandleFunc("POST /v1/updates/check", func(w http.ResponseWriter, r *http.Request) {

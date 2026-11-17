@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import { DatabaseIcon, KeyRoundIcon, PlusIcon, Trash2Icon } from '@lucide/vue';
+import { DatabaseIcon, ExternalLinkIcon, KeyRoundIcon, PlusIcon, Trash2Icon } from '@lucide/vue';
 import PageHeader from '@/components/app/PageHeader.vue';
 import ServiceDown from '@/components/app/ServiceDown.vue';
 import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
@@ -24,10 +24,24 @@ const { t } = useI18n();
 
 interface Engine { engine: string; installed: boolean; versions: string[] }
 interface Db { id: number; engine: string; name: string; user: string; site?: string }
-const props = defineProps<{ engines: Engine[]; databases: Db[]; sites: string[]; available: boolean }>();
+const props = defineProps<{ engines: Engine[]; databases: Db[]; sites: string[]; tls: Record<string, boolean>; pma: { domain: string; version: string }[]; available: boolean }>();
 
-const reload = () => router.reload({ only: ['engines', 'databases'] });
+const reload = () => router.reload({ only: ['engines', 'databases', 'pma'] });
 const { task, follow, dismiss } = useTask('db', () => reload());
+const pmaTask = useTask('core', () => reload());
+const pmaSite = ref('');
+const pmaUrl = (d: string) => `${props.tls[d] ? 'https' : 'http'}://${d}/`;
+const pmaFree = computed(() => props.sites.filter((s) => !props.pma.some((p) => p.domain === s)));
+async function installPma() {
+    if (!pmaSite.value) return;
+    const r = await act(rpc('core', 'installPhpMyAdmin', pmaSite.value));
+    if (r.ok) pmaTask.follow(r.data?.id);
+}
+const pmaRemoving = ref<string | null>(null);
+const pmaRemoveOpen = ref(false);
+async function removePma() {
+    if (pmaRemoving.value && (await act(rpc('core', 'removePhpMyAdmin', pmaRemoving.value), t('phpMyAdmin removed'))).ok) reload();
+}
 const { busy, run } = useBusy();
 const installedEngines = computed(() => props.engines.filter((e) => e.installed).map((e) => e.engine));
 const versions = reactive<Record<string, string>>({});
@@ -93,6 +107,34 @@ async function remove() {
         </Card>
     </section>
 
+    <TaskPanel :task="pmaTask.task.value" @dismiss="pmaTask.dismiss" />
+    <Card v-if="available && installedEngines.some((e) => e !== 'PostgreSQL')" class="gap-3 py-4">
+        <CardHeader>
+            <CardTitle>phpMyAdmin</CardTitle>
+            <CardAction><StatusBadge :status="pma.length ? 'installed' : 'not installed'" :labels="{ installed: t('Installed') }" /></CardAction>
+        </CardHeader>
+        <CardContent class="flex flex-col gap-3">
+            <p class="text-muted-foreground text-sm">{{ t('Web interface for MariaDB and MySQL. It runs as its own site, so use a dedicated subdomain such as pma.example.com. Log in with a database user from this page; the root account is disabled.') }}</p>
+            <ul v-if="pma.length" class="divide-y rounded-md border">
+                <li v-for="p in pma" :key="p.domain" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                    <span class="font-mono text-sm">{{ p.domain }} <span class="text-muted-foreground">· v{{ p.version }}</span></span>
+                    <span class="flex gap-2">
+                        <Button as-child variant="outline" size="sm"><a :href="pmaUrl(p.domain)" target="_blank" rel="noopener"><ExternalLinkIcon /> {{ t('Open') }}</a></Button>
+                        <Button variant="outline" size="icon-sm" class="text-destructive" :aria-label="`${t('Remove')} ${p.domain}`" @click="pmaRemoving = p.domain; pmaRemoveOpen = true"><Trash2Icon /></Button>
+                    </span>
+                </li>
+            </ul>
+            <div class="flex flex-wrap gap-2">
+                <Select :model-value="pmaSite" @update:model-value="(v) => (pmaSite = String(v))">
+                    <SelectTrigger class="w-full sm:w-72" :aria-label="t('Site')"><SelectValue :placeholder="t('Choose an empty site')" /></SelectTrigger>
+                    <SelectContent><SelectItem v-for="s in pmaFree" :key="s" :value="s">{{ s }}</SelectItem></SelectContent>
+                </Select>
+                <Button :disabled="!pmaSite" @click="installPma">{{ t('Install phpMyAdmin') }}</Button>
+            </div>
+            <p v-if="!sites.length" class="text-muted-foreground text-sm">{{ t('Create a site first, ideally pma.example.com, then install phpMyAdmin into it.') }}</p>
+        </CardContent>
+    </Card>
+
     <EmptyState v-if="available && !databases.length" :title="t('No databases yet')" :description="installedEngines.length ? 'Create one for a site.' : 'Install a database server first.'"><template #icon><DatabaseIcon /></template></EmptyState>
     <Card v-else-if="databases.length" class="gap-0 py-0">
         <ul class="divide-y">
@@ -126,6 +168,7 @@ async function remove() {
     </Dialog>
 
     <SecretDialog v-model:open="secretOpen" :title="t('Save these credentials')" :description="t('The password is shown only once and is not stored.')" :rows="secret" />
+    <ConfirmDialog v-model:open="pmaRemoveOpen" :title="t('Remove phpMyAdmin?')" :description="t('Its files are deleted from the site. Your databases are not touched.')" :confirm-label="t('Remove')" @confirm="removePma" />
     <ConfirmDialog v-model:open="resetOpen" :title="t('Generate a new password?')" :description="t('The old password stops working immediately.')" :confirm-label="t('Generate')" @confirm="resetting && resetPassword(resetting)" />
     <ConfirmDialog v-model:open="deleteOpen" :title="t('Delete this database?')" :description="t('All its data is erased permanently. Take a backup first if unsure.')" :type-name="deleting?.name" :confirm-label="t('Delete database')" @confirm="remove" />
 </template>

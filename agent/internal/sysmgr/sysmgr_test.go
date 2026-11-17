@@ -394,3 +394,81 @@ func TestStatsSample(t *testing.T) {
 		}
 	}
 }
+
+func TestCadWAFInstallManageAndRemove(t *testing.T) {
+	m, _ := newMgr(t)
+	m.CW = NewCWFake(m)
+	if c := m.CadWAF(); c.Installed || !c.Bundled {
+		t.Fatalf("fresh: %+v", c)
+	}
+	if err := m.AddCWIP("allow", "1.2.3.4"); err == nil {
+		t.Fatal("management before install must fail")
+	}
+	if _, err := m.InstallSoftware("cadwaf"); err == nil {
+		t.Fatal("software store must not install it blindly")
+	}
+	if _, err := m.InstallCadWAF("not an ip"); err == nil {
+		t.Fatal("bad allow address accepted")
+	}
+	tk, err := m.InstallCadWAF("203.0.113.9")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Tasks.Wait()
+	if got, _ := m.Tasks.Get(tk.ID); got.Status != "done" {
+		t.Fatalf("install %s: %s", got.Status, got.Log)
+	}
+	c := m.CadWAF()
+	if !c.Installed || !c.Active || !c.Attached || c.Egress {
+		t.Fatalf("after install: %+v", c)
+	}
+	has := func(l []int, n int) bool { return contains2(l, n) }
+	if !has(c.Ports.TCPIn, 22) || !has(c.Ports.TCPIn, 80) || !has(c.Ports.TCPIn, 443) {
+		t.Errorf("web and ssh ports must stay open: %v", c.Ports.TCPIn)
+	}
+	if !contains(c.Whitelist, "203.0.113.9") {
+		t.Errorf("admin address not allowed: %v", c.Whitelist)
+	}
+	if err := m.AddCWIP("block", "198.51.100.0/24"); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.AddCWIP("block", "x;rm"); err == nil {
+		t.Error("bad ip accepted")
+	}
+	if err := m.AddCWRule("tcp|in|d=3306|s=203.0.113.5", "allow"); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.AddCWRule("garbage", "allow"); err == nil {
+		t.Error("garbage rule accepted")
+	}
+	p := c.Ports
+	p.TCPIn = append(p.TCPIn, 8080)
+	if err := m.SetCWPorts(p); err != nil {
+		t.Fatal(err)
+	}
+	if err := m.SetCWPorts(CWPorts{TCPIn: []int{70000}}); err == nil {
+		t.Error("out of range port accepted")
+	}
+	c = m.CadWAF()
+	if len(c.Blocklist) != 1 || len(c.Rules) != 1 || !has(c.Ports.TCPIn, 8080) {
+		t.Fatalf("state: %+v", c)
+	}
+	if err := m.SetCWEgress(true); err != nil || !m.CadWAF().Egress {
+		t.Errorf("egress toggle failed: %v", err)
+	}
+	if err := m.CWService("detach"); err != nil {
+		t.Fatal(err)
+	}
+	if m.CadWAF().Active {
+		t.Error("detach must stop the service")
+	}
+	rt, err := m.RemoveCadWAF()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.Tasks.Wait()
+	_ = rt
+	if m.CadWAF().Installed {
+		t.Error("still installed after removal")
+	}
+}

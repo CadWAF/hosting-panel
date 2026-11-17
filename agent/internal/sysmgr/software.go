@@ -36,6 +36,7 @@ func catalog() []Package {
 		// Security
 		{ID: "fail2ban", Name: "Fail2ban", Category: "security", Description: "Bans IP addresses that keep failing to log in over SSH, nginx and mail.", Packages: []string{"fail2ban"}, Units: []string{"fail2ban.service"}, Manage: "/security", Detail: "Enables the sshd jail with safe defaults."},
 		{ID: "ufw", Name: "UFW firewall", Category: "security", Description: "Simple host firewall. Manage rules in Security.", Packages: []string{"ufw"}, Units: []string{"ufw.service"}, Manage: "/security", Detail: "Installed but left disabled until you turn it on."},
+		{ID: "cadwaf", Name: "CadWAF Firewall (eBPF)", Category: "security", Description: "Kernel-level default-deny firewall (XDP) with port rules, allow/block lists and a drop log. An alternative to UFW.", Packages: []string{}, Units: []string{"firewalld.service"}, Manage: "/security?tab=cadwaf", Detail: "Set up from Security: it needs your confirmation so it cannot lock you out."},
 		{ID: "unattended-upgrades", Name: "Automatic security updates", Category: "security", Description: "Installs security updates in the background.", Packages: []string{"unattended-upgrades"}, Units: []string{"unattended-upgrades.service"}, Manage: "/updates"},
 		{ID: "clamav", Name: "ClamAV antivirus", Category: "security", Description: "Scans files for malware (on demand and with the signature updater).", Packages: []string{"clamav", "clamav-daemon", "clamav-freshclam"}, Units: []string{"clamav-freshclam.service", "clamav-daemon.service"}, Detail: "Uses about 1 GB of RAM while the daemon runs."},
 		// Runtimes and tools
@@ -127,7 +128,11 @@ func (m *Manager) Software() []Software {
 		if p.Packages == nil {
 			p.Packages = []string{}
 		}
-		if v, ok := ds[p.Packages[0]]; ok {
+		if p.ID == "cadwaf" {
+			if m.cwInstalled() {
+				s.Installed, s.Version = true, strings.TrimSpace(m.read(cwVersion))
+			}
+		} else if v, ok := ds[p.Packages[0]]; ok {
 			s.Installed, s.Version = true, v
 		}
 		for _, u := range p.Units {
@@ -151,6 +156,9 @@ func (m *Manager) InstallSoftware(id string) (store.Task, error) {
 	p, err := m.pkg(id)
 	if err != nil {
 		return store.Task{}, err
+	}
+	if id == "cadwaf" {
+		return store.Task{}, invalid("set up CadWAF Firewall from the Security page")
 	}
 	return m.Tasks.Start("software.install", "Install "+p.Name, func(l *tasks.Log) error {
 		m.apt.Lock()
@@ -180,6 +188,9 @@ func (m *Manager) RemoveSoftware(id string) (store.Task, error) {
 	p, err := m.pkg(id)
 	if err != nil {
 		return store.Task{}, err
+	}
+	if id == "cadwaf" {
+		return m.RemoveCadWAF()
 	}
 	return m.Tasks.Start("software.remove", "Remove "+p.Name, func(l *tasks.Log) error {
 		m.apt.Lock()

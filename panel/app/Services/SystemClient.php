@@ -168,6 +168,63 @@ class SystemClient extends ServiceClient
     }
 
     // Docker
+    public function cadwaf(): array
+    {
+        return $this->call('GET', '/v1/cadwaf')['data'] ?? [];
+    }
+
+    public function installCadwaf(string $allowIp = ''): array
+    {
+        return $this->call('POST', '/v1/cadwaf/install', ['allow_ip' => $allowIp]);
+    }
+
+    public function removeCadwaf(): array
+    {
+        return $this->call('POST', '/v1/cadwaf/remove');
+    }
+
+    public function setCadwafPorts(array $in): array
+    {
+        $in = ['tcp_in' => [], 'udp_in' => [], 'tcp_out' => [], 'udp_out' => [], 'allow_localhost' => true] + $in;
+
+        return $this->call('PUT', '/v1/cadwaf/ports', $in);
+    }
+
+    public function addCadwafIp(string $list, string $ip): array
+    {
+        return $this->call('POST', '/v1/cadwaf/ips/'.$this->seg($list), ['ip' => $ip]);
+    }
+
+    public function deleteCadwafIp(string $list, string $ip): array
+    {
+        return $this->call('POST', '/v1/cadwaf/ips/'.$this->seg($list).'/delete', ['ip' => $ip]);
+    }
+
+    public function addCadwafRule(string $rule, string $file): array
+    {
+        return $this->call('POST', '/v1/cadwaf/rules', ['rule' => $rule, 'file' => $file]);
+    }
+
+    public function deleteCadwafRule(int $id, string $file): array
+    {
+        return $this->call('POST', '/v1/cadwaf/rules/delete', ['id' => $id, 'file' => $file]);
+    }
+
+    public function reloadCadwaf(): array
+    {
+        return $this->call('POST', '/v1/cadwaf/reload');
+    }
+
+    public function setCadwafEgress(bool $on): array
+    {
+        return $this->call('POST', '/v1/cadwaf/egress', ['enabled' => $on]);
+    }
+
+    public function cadwafService(string $action): array
+    {
+        return $this->call('POST', '/v1/cadwaf/service/'.$this->seg($action));
+    }
+
     public function docker(): array
     {
         return $this->call('GET', '/v1/docker')['data'] ?? [];

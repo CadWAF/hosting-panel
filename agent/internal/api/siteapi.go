@@ -3,9 +3,12 @@ package api
 import (
 	"mime"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"hostingpanel/agent/internal/sitefiles"
+	"hostingpanel/agent/internal/sites"
 )
 
 const maxUpload = 512 << 20
@@ -78,6 +81,30 @@ func (s *Server) registerSiteTools(m *http.ServeMux) {
 		reply(w, 200, map[string]any{"data": t}, err)
 	})
 
+	m.HandleFunc("GET /v1/sites/{domain}/composer", func(w http.ResponseWriter, r *http.Request) {
+		c, err := s.Sites.Composer(d(r))
+		reply(w, 200, map[string]any{"data": c}, err)
+	})
+	m.HandleFunc("POST /v1/sites/{domain}/composer", func(w http.ResponseWriter, r *http.Request) {
+		var in sites.ComposerInput
+		if !decode(w, r, &in) {
+			return
+		}
+		t, err := s.Sites.RunComposer(d(r), in)
+		reply(w, 202, map[string]any{"data": t}, err)
+	})
+	m.HandleFunc("GET /v1/apps", func(w http.ResponseWriter, r *http.Request) {
+		a, err := s.Sites.Apps()
+		reply(w, 200, map[string]any{"data": a}, err)
+	})
+	m.HandleFunc("POST /v1/sites/{domain}/apps/phpmyadmin", func(w http.ResponseWriter, r *http.Request) {
+		t, err := s.Sites.InstallPhpMyAdmin(d(r))
+		reply(w, 202, map[string]any{"data": t}, err)
+	})
+	m.HandleFunc("DELETE /v1/sites/{domain}/apps/phpmyadmin", func(w http.ResponseWriter, r *http.Request) {
+		reply(w, 200, map[string]any{"data": nil}, s.Sites.RemovePhpMyAdmin(d(r)))
+	})
+
 	// ---- File Manager ----
 	withFS := func(w http.ResponseWriter, r *http.Request, fn func(f *sitefiles.FS) error) {
 		f, err := s.Sites.Files(d(r))
@@ -98,6 +125,16 @@ func (s *Server) registerSiteTools(m *http.ServeMux) {
 		defer f.Close()
 		l, err := f.List(q(r))
 		reply(w, 200, map[string]any{"data": l}, err)
+	})
+	m.HandleFunc("GET /v1/sites/{domain}/files/search", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.Sites.Files(d(r))
+		if err != nil {
+			reply(w, 200, nil, err)
+			return
+		}
+		defer f.Close()
+		h, err := f.Search(q(r), r.URL.Query().Get("q"))
+		reply(w, 200, map[string]any{"data": h}, err)
 	})
 	m.HandleFunc("GET /v1/sites/{domain}/files/content", func(w http.ResponseWriter, r *http.Request) {
 		f, err := s.Sites.Files(d(r))
@@ -128,8 +165,25 @@ func (s *Server) registerSiteTools(m *http.ServeMux) {
 			return
 		}
 		defer fh.Close()
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": st.Name()}))
+		ct, disp := "application/octet-stream", "attachment"
+		if r.URL.Query().Get("inline") == "1" { // only formats a browser cannot run as script
+			switch strings.ToLower(filepath.Ext(st.Name())) {
+			case ".png":
+				ct, disp = "image/png", "inline"
+			case ".jpg", ".jpeg":
+				ct, disp = "image/jpeg", "inline"
+			case ".gif":
+				ct, disp = "image/gif", "inline"
+			case ".webp":
+				ct, disp = "image/webp", "inline"
+			case ".pdf":
+				ct, disp = "application/pdf", "inline"
+			}
+		}
+		w.Header().Set("Content-Type", ct)
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("Content-Security-Policy", "sandbox")
+		w.Header().Set("Content-Disposition", mime.FormatMediaType(disp, map[string]string{"filename": st.Name()}))
 		http.ServeContent(w, r, st.Name(), st.ModTime(), fh)
 	})
 	post := func(path string, fn func(f *sitefiles.FS, in map[string]any) error) {
@@ -151,6 +205,18 @@ func (s *Server) registerSiteTools(m *http.ServeMux) {
 			return sitefiles.ErrInvalid
 		}
 		return f.Chmod(str(in, "path"), uint32(n))
+	})
+	post("copy", func(f *sitefiles.FS, in map[string]any) error { return f.Copy(str(in, "from"), str(in, "to")) })
+	post("archive", func(f *sitefiles.FS, in map[string]any) error {
+		var paths []string
+		if l, ok := in["paths"].([]any); ok {
+			for _, v := range l {
+				if sv, ok := v.(string); ok {
+					paths = append(paths, sv)
+				}
+			}
+		}
+		return f.Archive(paths, str(in, "dest"))
 	})
 	post("extract", func(f *sitefiles.FS, in map[string]any) error {
 		return f.Extract(str(in, "path"), str(in, "dest"), maxUpload*4)

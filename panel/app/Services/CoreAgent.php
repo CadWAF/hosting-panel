@@ -146,6 +146,36 @@ class CoreAgent extends ServiceClient
         return (string) ($this->call('GET', $this->sitePath($d)."/logs/$name?lines=$lines")['data'] ?? '');
     }
 
+    public function searchFiles(string $d, string $path, string $q): array
+    {
+        return $this->call('GET', $this->sitePath($d).'/files/search?path='.rawurlencode($path).'&q='.rawurlencode($q));
+    }
+
+    public function composer(string $d): array
+    {
+        return $this->call('GET', $this->sitePath($d).'/composer');
+    }
+
+    public function runComposer(string $d, string $command, string $package = '', string $dir = '', bool $noDev = false): array
+    {
+        return $this->call('POST', $this->sitePath($d).'/composer', ['command' => $command, 'package' => $package, 'dir' => $dir, 'no_dev' => $noDev]);
+    }
+
+    public function apps(): array
+    {
+        return $this->call('GET', '/v1/apps')['data'] ?? [];
+    }
+
+    public function installPhpMyAdmin(string $d): array
+    {
+        return $this->call('POST', $this->sitePath($d).'/apps/phpmyadmin');
+    }
+
+    public function removePhpMyAdmin(string $d): array
+    {
+        return $this->call('DELETE', $this->sitePath($d).'/apps/phpmyadmin');
+    }
+
     public function files(string $d, string $path): array
     {
         return $this->call('GET', $this->sitePath($d).'/files?path='.rawurlencode($path));
@@ -171,9 +201,9 @@ class CoreAgent extends ServiceClient
         return $this->call('POST', $this->sitePath($d)."/files/$op", $args);
     }
 
-    public function download(string $d, string $path)
+    public function download(string $d, string $path, bool $inline = false)
     {
-        return $this->stream('GET', $this->sitePath($d).'/files/download?path='.rawurlencode($path));
+        return $this->stream('GET', $this->sitePath($d).'/files/download?path='.rawurlencode($path).($inline ? '&inline=1' : ''));
     }
 
     public function compress(string $d, array $paths)

@@ -34,6 +34,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/services', [PageController::class, 'services'])->name('services');
 
     Route::post('/rpc', [RpcController::class, 'call'])->name('rpc');
+    Route::get('/sites/{domain}/zip', [RpcController::class, 'zip'])->name('site.zip')->where('domain', '[A-Za-z0-9.\-]+');
     Route::post('/sites/{domain}/upload', [RpcController::class, 'upload'])->name('site.upload')->where('domain', '[A-Za-z0-9.\-]+');
     Route::get('/sites/{domain}/download', [RpcController::class, 'download'])->name('site.download')->where('domain', '[A-Za-z0-9.\-]+');
 });

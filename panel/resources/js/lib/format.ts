@@ -33,3 +33,16 @@ export function duration(sec: number): string {
 export function rate(n: number): string {
     return `${bytes(n)}/s`;
 }
+
+/** [22, 80, 81, 82, 443] -> "22,80-82,443" */
+export function compact(list: number[] | null | undefined): string {
+    const l = [...(list ?? [])].sort((a, b) => a - b);
+    const out: string[] = [];
+    for (let i = 0; i < l.length; ) {
+        let j = i;
+        while (j + 1 < l.length && l[j + 1] === l[j] + 1) j++;
+        out.push(j - i >= 2 ? `${l[i]}-${l[j]}` : l.slice(i, j + 1).join(','));
+        i = j + 1;
+    }
+    return out.join(',');
+}

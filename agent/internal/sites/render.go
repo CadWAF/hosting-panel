@@ -14,6 +14,8 @@ type tmplData struct {
 	Settings                                                []kv
 	TLS                                                     bool
 	SSLNames                                                string
+	MaxBody, Pre                                            string
+	RootProxy                                               bool
 }
 
 type kv struct{ K, V string }
@@ -50,6 +52,7 @@ php_admin_flag[log_errors] = on
 const acmeLocation = `    location ^~ /.well-known/acme-challenge/ {
         root /var/www/letsencrypt;
         default_type text/plain;
+        auth_basic off;
     }
 `
 
@@ -88,8 +91,8 @@ server {
 var nginxPHPTmpl = vhost("", `    root {{.Docroot}};
     index index.php index.html;
     error_log {{.LogDir}}/error.log;
-    client_max_body_size 128m;
-
+    client_max_body_size {{.MaxBody}};
+{{.Pre}}{{if not .RootProxy}}
     location / {
         try_files $uri $uri/ /index.php?$args;
     }
@@ -100,11 +103,11 @@ var nginxPHPTmpl = vhost("", `    root {{.Docroot}};
     location ~ /\.(?!well-known) {
         deny all;
     }
-`)
+{{end}}`)
 
 var nginxProxyTmpl = vhost(" (Apache backend)", `    error_log {{.LogDir}}/error.log;
-    client_max_body_size 128m;
-
+    client_max_body_size {{.MaxBody}};
+{{.Pre}}{{if not .RootProxy}}
     location / {
         proxy_pass http://127.0.0.1:{{.ApachePort}};
         proxy_set_header Host $host;
@@ -112,7 +115,7 @@ var nginxProxyTmpl = vhost(" (Apache backend)", `    error_log {{.LogDir}}/error
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-`)
+{{end}}`)
 
 var apacheTmpl = template.Must(template.New("apache").Parse(`# managed by hostingpanel core-agent - do not edit
 Listen 127.0.0.1:{{.ApachePort}}

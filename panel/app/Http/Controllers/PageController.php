@@ -9,6 +9,7 @@ use App\Services\DbManagerClient;
 use App\Services\MailClient;
 use App\Services\NotifierClient;
 use App\Services\SystemClient;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,12 +50,15 @@ class PageController extends Controller
     {
         $d = $this->load(fn () => ['engines' => $db->engines(), 'databases' => $db->databases()], ['engines' => [], 'databases' => []]);
         try {
-            $sites = array_column($core->sites(), 'domain');
+            $all = $core->sites();
+            $sites = array_column($all, 'domain');
+            $tls = collect($all)->mapWithKeys(fn ($s) => [$s['domain'] => (string) ($s['tls'] ?? '') !== ''])->all();
+            $pma = array_values(array_filter($core->apps(), fn ($a) => ($a['app'] ?? '') === 'phpmyadmin'));
         } catch (CoreAgentUnavailable) {
-            $sites = [];
+            $sites = $tls = $pma = [];
         }
 
-        return Inertia::render('Databases', $d + ['sites' => $sites]);
+        return Inertia::render('Databases', $d + ['sites' => $sites, 'tls' => (object) $tls, 'pma' => $pma]);
     }
 
     public function backups(BackupClient $b, CoreAgent $core, DbManagerClient $db): Response
@@ -133,11 +137,12 @@ class PageController extends Controller
         return Inertia::render('Software', $this->load(fn () => $system->software(), ['items' => [], 'categories' => []]));
     }
 
-    public function security(SystemClient $system): Response
+    public function security(Request $request, SystemClient $system): Response
     {
         return Inertia::render('Security', $this->load(fn () => [
-            'firewall' => $system->firewall(), 'fail2ban' => $system->fail2ban(), 'ssh' => $system->ssh(),
-        ], ['firewall' => null, 'fail2ban' => null, 'ssh' => null]));
+            'firewall' => $system->firewall(), 'fail2ban' => $system->fail2ban(), 'ssh' => $system->ssh(), 'cadwaf' => $system->cadwaf(),
+            'clientIp' => (string) $request->ip(),
+        ], ['firewall' => null, 'fail2ban' => null, 'ssh' => null, 'cadwaf' => null, 'clientIp' => '']));
     }
 
     public function docker(SystemClient $system): Response

@@ -130,3 +130,43 @@ func TestBinaryAndTooLargeNotEditable(t *testing.T) {
 		t.Fatalf("large: %v", err)
 	}
 }
+
+func TestCopySearchArchive(t *testing.T) {
+	dir := t.TempDir()
+	f, err := Open(dir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := f.Mkdir("a"); err != nil {
+		t.Fatal("mkdir", err)
+	}
+	if err := f.Write("a/one.txt", strings.NewReader("1"), 100); err != nil {
+		t.Fatal("write", err)
+	}
+	if err := f.Copy("a", "b"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "b/one.txt")); err != nil {
+		t.Fatal("copy missing")
+	}
+	if err := f.Copy("a", "b"); !errors.Is(err, ErrInvalid) {
+		t.Errorf("overwrite allowed: %v", err)
+	}
+	if err := f.Copy("a", "a/inner"); !errors.Is(err, ErrInvalid) {
+		t.Errorf("copy into itself allowed: %v", err)
+	}
+	h, _ := f.Search("", "ONE")
+	if len(h) != 2 {
+		t.Errorf("hits %+v", h)
+	}
+	if err := f.Archive([]string{"a", "b"}, "out.zip"); err != nil {
+		t.Fatal(err)
+	}
+	if st, err := os.Stat(filepath.Join(dir, "out.zip")); err != nil || st.Size() == 0 {
+		t.Fatal("zip not written")
+	}
+	if err := f.Archive([]string{"a"}, "../out.zip"); err == nil {
+		t.Error("archive escape allowed")
+	}
+}

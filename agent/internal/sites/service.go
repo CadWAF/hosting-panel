@@ -95,7 +95,13 @@ func (s *Service) data(x store.Site) tmplData {
 	for k, v := range x.PHPSettings {
 		settings[k] = v
 	}
+	apache := 0
+	if x.WebMode == "apache" {
+		apache = x.ApachePort
+	}
+	pre, rootProxy, maxBody := s.webDirectives(x, apache)
 	return tmplData{
+		MaxBody: maxBody, Pre: pre, RootProxy: rootProxy,
 		Domain: x.Domain, User: x.User, PHPVersion: x.PHPVersion, Home: home,
 		Docroot:    filepath.Join(home, "public_html", x.Docroot),
 		Socket:     filepath.Join(s.p.RunDir, "php"+x.PHPVersion+"-fpm-"+x.User+".sock"),
@@ -166,6 +172,12 @@ func (s *Service) writeState(old *store.Site, x store.Site) error {
 			return err
 		}
 		return relink(s.nginxAvail(x), s.nginxEn(x))
+	}
+	if needsUpgradeMap(x) {
+		if err := write(filepath.Join(s.p.Root, "/etc/nginx/conf.d/hostingpanel-upgrade.conf"),
+			"# managed by hostingpanel core-agent - do not edit\nmap $http_upgrade $connection_upgrade {\n    default upgrade;\n    ''      close;\n}\n"); err != nil {
+			return err
+		}
 	}
 	pool, err := render(poolTmpl, d)
 	if err != nil {
@@ -365,6 +377,8 @@ type UpdateInput struct {
 	Preset      *string           `json:"preset"`
 	PHPSettings map[string]string `json:"php_settings"`
 	Docroot     *string           `json:"docroot"`
+	Web         *WebInput         `json:"web"`
+	Composer    *bool             `json:"composer"`
 }
 
 func (s *Service) Update(domain string, in UpdateInput) (store.Site, error) {
@@ -412,6 +426,32 @@ func (s *Service) Update(domain string, in UpdateInput) (store.Site, error) {
 			return old, err
 		}
 		x.Docroot = d
+	}
+	if in.Composer != nil {
+		x.Composer = *in.Composer
+	}
+	hash := ""
+	if in.Web != nil {
+		w, h, err := applyWeb(old.Web, *in.Web)
+		if err != nil {
+			return old, err
+		}
+		x.Web, hash = w, h
+		if x.Web.AuthUser != "" && hash == "" && !s.authFileHasHash(x.Domain) {
+			return old, fmt.Errorf("%w: set a password for basic auth", ErrInvalid)
+		}
+		if hash != "" {
+			if err := s.writeAuthFile(x.Domain, x.Web.AuthUser, hash); err != nil {
+				return old, err
+			}
+		} else if x.Web.AuthUser != old.Web.AuthUser && x.Web.AuthUser != "" {
+			// user renamed without a new password: keep the old hash under the new name
+			if b, err := os.ReadFile(s.authFile(x.Domain)); err == nil {
+				if _, h2, ok := strings.Cut(strings.TrimSpace(string(b)), ":"); ok {
+					_ = s.writeAuthFile(x.Domain, x.Web.AuthUser, h2)
+				}
+			}
+		}
 	}
 	return s.commit(&old, x)
 }
@@ -468,7 +508,7 @@ func (s *Service) Delete(domain string) error {
 	if err != nil {
 		return err
 	}
-	rm(s.poolPath(x), s.nginxEn(x), s.nginxAvail(x), s.apacheEn(x), s.apacheAvail(x))
+	rm(s.poolPath(x), s.nginxEn(x), s.nginxAvail(x), s.apacheEn(x), s.apacheAvail(x), s.authFile(x.Domain))
 	if err := s.reload(&x, x); err != nil {
 		return err
 	}
@@ -486,6 +526,7 @@ func (s *Service) Delete(domain string) error {
 	}
 	_, _ = s.st.DB().Exec(`DELETE FROM ssh_keys WHERE domain=?`, domain)
 	_, _ = s.st.DB().Exec(`DELETE FROM cron_jobs WHERE domain=?`, domain)
+	_, _ = s.st.DB().Exec(`DELETE FROM site_apps WHERE domain=?`, domain)
 	return s.st.Delete(domain)
 }
 

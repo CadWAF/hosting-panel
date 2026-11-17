@@ -21,17 +21,50 @@ type Site struct {
 	ApachePort  int               `json:"apache_port"`
 	Preset      string            `json:"preset"` // small | medium | large
 	PHPSettings map[string]string `json:"php_settings"`
-	TLS         string            `json:"tls"` // "" (off) | apex | www (certificate also covers www.)
-	Docroot     string            `json:"docroot"` // folder inside public_html served as the web root ("" = public_html itself)
+	TLS         string            `json:"tls"`      // "" (off) | apex | www (certificate also covers www.)
+	Docroot     string            `json:"docroot"`  // folder inside public_html served as the web root ("" = public_html itself)
+	Web         WebConfig         `json:"web"`      // extra web server settings: limits, redirects, reverse proxies, basic auth
+	Composer    bool              `json:"composer"` // the Administrator allowed running Composer for this Site
 	CreatedAt   time.Time         `json:"created_at"`
 }
 
-const siteCols = `domain,user,php_version,status,web_mode,apache_port,preset,php_settings,tls,docroot,created_at`
+// WebConfig holds the per-Site web server options. The Core Agent validates every field before it reaches nginx.
+type WebConfig struct {
+	MaxBodyMB   int        `json:"max_body_mb"` // 0 = default (128)
+	Gzip        bool       `json:"gzip"`
+	StaticCache bool       `json:"static_cache"`
+	AuthUser    string     `json:"auth_user"` // basic auth user; "" = off (the password hash lives in a root-owned file)
+	Redirects   []Redirect `json:"redirects"`
+	Proxies     []Proxy    `json:"proxies"`
+}
+
+type Redirect struct {
+	From string `json:"from"` // "/old" matches exactly, "/old/" matches everything below
+	To   string `json:"to"`
+	Code int    `json:"code"` // 301 | 302
+}
+
+type Proxy struct {
+	Path      string `json:"path"`      // "/" proxies the whole Site
+	Upstream  string `json:"upstream"`  // http://127.0.0.1:8080
+	WebSocket bool   `json:"websocket"` // pass Upgrade headers
+}
+
+const siteCols = `domain,user,php_version,status,web_mode,apache_port,preset,php_settings,tls,docroot,web,composer,created_at`
 
 func (x *Site) scan(r interface{ Scan(...any) error }) error {
-	var js string
-	if err := r.Scan(&x.Domain, &x.User, &x.PHPVersion, &x.Status, &x.WebMode, &x.ApachePort, &x.Preset, &js, &x.TLS, &x.Docroot, &x.CreatedAt); err != nil {
+	var js, web string
+	if err := r.Scan(&x.Domain, &x.User, &x.PHPVersion, &x.Status, &x.WebMode, &x.ApachePort, &x.Preset, &js, &x.TLS, &x.Docroot, &web, &x.Composer, &x.CreatedAt); err != nil {
 		return err
+	}
+	if web != "" {
+		_ = json.Unmarshal([]byte(web), &x.Web)
+	}
+	if x.Web.Redirects == nil {
+		x.Web.Redirects = []Redirect{}
+	}
+	if x.Web.Proxies == nil {
+		x.Web.Proxies = []Proxy{}
 	}
 	x.PHPSettings = map[string]string{}
 	if js != "" {
@@ -64,6 +97,8 @@ func Open(path string) (*Store, error) {
 		`ALTER TABLE sites ADD COLUMN php_settings TEXT NOT NULL DEFAULT '{}'`,
 		`ALTER TABLE sites ADD COLUMN tls TEXT NOT NULL DEFAULT ''`,
 		`ALTER TABLE sites ADD COLUMN docroot TEXT NOT NULL DEFAULT ''`,
+		`ALTER TABLE sites ADD COLUMN web TEXT NOT NULL DEFAULT '{}'`,
+		`ALTER TABLE sites ADD COLUMN composer INTEGER NOT NULL DEFAULT 0`,
 	} {
 		_, _ = db.Exec(alt) // fails harmlessly when the column already exists
 	}
@@ -81,16 +116,18 @@ func (s *Store) DB() *sql.DB { return s.db }
 
 func (s *Store) Insert(site Site) error {
 	js, _ := json.Marshal(site.PHPSettings)
-	_, err := s.db.Exec(`INSERT INTO sites(`+siteCols+`) VALUES(?,?,?,?,?,?,?,?,?,?,?)`,
-		site.Domain, site.User, site.PHPVersion, site.Status, site.WebMode, site.ApachePort, site.Preset, string(js), site.TLS, site.Docroot, site.CreatedAt)
+	web, _ := json.Marshal(site.Web)
+	_, err := s.db.Exec(`INSERT INTO sites(`+siteCols+`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+		site.Domain, site.User, site.PHPVersion, site.Status, site.WebMode, site.ApachePort, site.Preset, string(js), site.TLS, site.Docroot, string(web), site.Composer, site.CreatedAt)
 	return err
 }
 
 // Update rewrites every mutable column of an existing site.
 func (s *Store) Update(site Site) error {
 	js, _ := json.Marshal(site.PHPSettings)
-	res, err := s.db.Exec(`UPDATE sites SET php_version=?,status=?,web_mode=?,apache_port=?,preset=?,php_settings=?,tls=?,docroot=? WHERE domain=?`,
-		site.PHPVersion, site.Status, site.WebMode, site.ApachePort, site.Preset, string(js), site.TLS, site.Docroot, site.Domain)
+	web, _ := json.Marshal(site.Web)
+	res, err := s.db.Exec(`UPDATE sites SET php_version=?,status=?,web_mode=?,apache_port=?,preset=?,php_settings=?,tls=?,docroot=?,web=?,composer=? WHERE domain=?`,
+		site.PHPVersion, site.Status, site.WebMode, site.ApachePort, site.Preset, string(js), site.TLS, site.Docroot, string(web), site.Composer, site.Domain)
 	if err != nil {
 		return err
 	}

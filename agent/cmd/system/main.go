@@ -42,6 +42,7 @@ func main() {
 	m := sysmgr.New(run, tm, root)
 	m.SitesBase = *sitesBase
 	if *dry {
+		m.CW = sysmgr.NewCWFake(m)
 		m.Lookup = func(name string) (int, int, string, error) { return 1001, 1001, filepath.Join(*sitesBase, name), nil }
 	}
 

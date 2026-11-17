@@ -29,6 +29,9 @@ type SSHKey struct {
 }
 
 func (s *Service) initAccess() error {
+	if err := s.initApps(); err != nil {
+		return err
+	}
 	for _, q := range []string{
 		`CREATE TABLE IF NOT EXISTS ssh_keys(id INTEGER PRIMARY KEY AUTOINCREMENT, domain TEXT NOT NULL,
 			label TEXT NOT NULL, fingerprint TEXT NOT NULL, public_key TEXT NOT NULL, added_at TIMESTAMP NOT NULL,

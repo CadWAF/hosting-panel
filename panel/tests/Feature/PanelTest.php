@@ -83,7 +83,7 @@ class PanelTest extends TestCase
     {
         $this->actingAs($this->admin());
         config(['panel.core_socket' => '/nonexistent/core.sock', 'panel.db_socket' => '/nonexistent/db.sock',
-            'panel.backup_socket' => '/nonexistent/b.sock', 'panel.mail_socket' => '/nonexistent/m.sock']);
+            'panel.backup_socket' => '/nonexistent/b.sock', 'panel.mail_socket' => '/nonexistent/m.sock', 'panel.system_socket' => '/nonexistent/s.sock']);
         $this->assertFalse(app(CoreAgent::class)->isHealthy());
         foreach (['sites' => 'Sites', 'databases' => 'Databases', 'backups' => 'Backups', 'mail' => 'Mail', 'php' => 'Php', 'tasks' => 'Tasks', 'sites/x.com' => 'SiteDetail'] as $url => $component) {
             $this->get("/$url")->assertOk()->assertInertia(fn (Assert $p) => $p->component($component)->where('available', false));
@@ -95,7 +95,7 @@ class PanelTest extends TestCase
         Http::fake(['*' => Http::response(['data' => []])]);
         $this->actingAs($this->admin());
         config(['panel.mail_socket' => '/nonexistent/m.sock']);
-        $this->get('/services')->assertOk()->assertInertia(fn (Assert $p) => $p->component('Services')->has('services', 6));
+        $this->get('/services')->assertOk()->assertInertia(fn (Assert $p) => $p->component('Services')->has('services', 7));
     }
 
     public function test_rpc_only_allows_listed_operations(): void
@@ -217,5 +217,27 @@ class PanelTest extends TestCase
         $this->actingAs($this->admin());
         $this->post('/logout')->assertRedirect('/login');
         $this->assertGuest();
+    }
+
+    public function test_security_page_carries_cadwaf_state_and_client_ip(): void
+    {
+        Http::fake(fn ($r) => match (true) {
+            str_contains($r->url(), '/v1/cadwaf') => Http::response(['data' => ['installed' => false, 'bundled' => true]]),
+            default => Http::response(['data' => ['installed' => false]]),
+        });
+        $this->actingAs($this->admin());
+        $this->get('/security')->assertOk()->assertInertia(fn (Assert $p) => $p
+            ->component('Security')->where('cadwaf.bundled', true)->has('clientIp'));
+    }
+
+    public function test_rpc_reaches_new_site_and_firewall_operations_but_nothing_else(): void
+    {
+        Http::fake(['*' => Http::response(['data' => []])]);
+        $this->actingAs($this->admin());
+        foreach ([['core', 'composer', ['x.com']], ['system', 'cadwaf', []], ['system', 'addCadwafIp', ['block', '1.2.3.4']]] as [$svc, $m, $args]) {
+            $this->postJson('/rpc', ['service' => $svc, 'method' => $m, 'args' => $args])->assertOk()->assertJson(['ok' => true]);
+        }
+        $this->postJson('/rpc', ['service' => 'system', 'method' => 'cwCall', 'args' => []])->assertStatus(422);
+        $this->postJson('/rpc', ['service' => 'core', 'method' => 'call', 'args' => []])->assertStatus(422);
     }
 }

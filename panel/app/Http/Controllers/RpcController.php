@@ -21,13 +21,15 @@ class RpcController extends Controller
     private const ALLOWED = [
         'core' => [CoreAgent::class, ['createSite', 'updateSite', 'setSiteEnabled', 'deleteSite', 'installPhp', 'removePhp', 'installExtension',
             'removeExtension', 'installApache', 'site', 'issueTls', 'removeTls', 'task', 'sshKeys', 'addSshKey', 'generateSshKey', 'removeSshKey',
-            'cron', 'addCron', 'removeCron', 'log', 'files', 'readFile', 'writeFile', 'fileOp']],
+            'cron', 'addCron', 'removeCron', 'log', 'files', 'readFile', 'writeFile', 'fileOp', 'searchFiles', 'composer', 'runComposer',
+            'installPhpMyAdmin', 'removePhpMyAdmin']],
         'db' => [DbManagerClient::class, ['installEngine', 'createDatabase', 'resetPassword', 'deleteDatabase', 'task']],
         'backup' => [BackupClient::class, ['addDestination', 'testDestination', 'deleteDestination', 'addJob', 'deleteJob', 'runJob', 'restore', 'installBorg', 'task']],
-        'system' => [SystemClient::class, ['stats', 'services', 'installSoftware', 'removeSoftware', 'serviceAction', 'setJail', 'setF2bDefaults', 'ban', 'unban',
+        'system' => [SystemClient::class, ['stats', 'docker', 'services', 'installSoftware', 'removeSoftware', 'serviceAction', 'setJail', 'setF2bDefaults', 'ban', 'unban',
             'enableFirewall', 'disableFirewall', 'addRule', 'deleteRule', 'setSsh', 'checkUpdates', 'applyUpdates', 'reboot', 'addCron', 'updateCron',
             'deleteCron', 'runCron', 'readLog', 'runContainer', 'containerAction', 'containerLog', 'pullImage', 'removeImage', 'addFtp',
-            'setFtpPassword', 'deleteFtp', 'openFtpPorts', 'task']],
+            'setFtpPassword', 'deleteFtp', 'openFtpPorts', 'cadwaf', 'installCadwaf', 'removeCadwaf', 'setCadwafPorts', 'addCadwafIp',
+            'deleteCadwafIp', 'addCadwafRule', 'deleteCadwafRule', 'reloadCadwaf', 'setCadwafEgress', 'cadwafService', 'task']],
         'mail' => [MailClient::class, ['saveSettings', 'install', 'addDomain', 'deleteDomain', 'dns', 'addMailbox', 'setPassword', 'deleteMailbox', 'webmail', 'task']],
     ];
 
@@ -77,7 +79,7 @@ class RpcController extends Controller
     public function download(Request $r, string $domain, CoreAgent $core): StreamedResponse
     {
         $path = (string) $r->query('path');
-        $up = $core->download($domain, $path);
+        $up = $core->download($domain, $path, $r->boolean('inline'));
         abort_unless($up->getStatusCode() === 200, 404);
 
         return response()->stream(function () use ($up) {
@@ -86,7 +88,32 @@ class RpcController extends Controller
                 echo $b->read(65536);
                 flush();
             }
-        }, 200, ['Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="'.addcslashes(basename($path), '"\\').'"']);
+        }, 200, [
+            'Content-Type' => $up->getHeaderLine('Content-Type') ?: 'application/octet-stream',
+            'Content-Disposition' => $up->getHeaderLine('Content-Disposition') ?: 'attachment; filename="'.addcslashes(basename($path), '"\\').'"',
+            'X-Content-Type-Options' => 'nosniff',
+            'Content-Security-Policy' => 'sandbox',
+        ]);
+    }
+
+    /** Several files or folders as one zip download. */
+    public function zip(Request $r, string $domain, CoreAgent $core): StreamedResponse
+    {
+        $paths = array_values(array_filter(array_map('strval', (array) $r->query('p')), fn ($p) => $p !== ''));
+        abort_if($paths === [] || count($paths) > 200, 422);
+        $up = $core->compress($domain, $paths);
+        abort_unless($up->getStatusCode() === 200, 404);
+        $name = count($paths) === 1 ? basename($paths[0]) : $domain;
+
+        return response()->stream(function () use ($up) {
+            $b = $up->getBody();
+            while (! $b->eof()) {
+                echo $b->read(65536);
+                flush();
+            }
+        }, 200, [
+            'Content-Type' => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="'.addcslashes($name, '"\\').'.zip"',
+        ]);
     }
 }

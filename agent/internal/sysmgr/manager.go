@@ -36,6 +36,9 @@ type Manager struct {
 	// Lookup resolves an operating-system user (replaceable in development, where site users do not exist).
 	Lookup func(name string) (uid, gid int, home string, err error)
 
+	// CW replaces the HTTP calls to the CadWAF Firewall daemon (tests and the development simulator).
+	CW func(method, path string, body any) (map[string]any, error)
+
 	apt     sync.Mutex // one apt/dpkg operation at a time
 	stats   *sampler
 	catalog []Package
