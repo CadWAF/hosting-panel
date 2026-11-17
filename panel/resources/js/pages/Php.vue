@@ -14,6 +14,9 @@ import { Toggle } from '@/components/ui/toggle';
 import { act } from '@/composables/useActions';
 import { rpc } from '@/composables/useRpc';
 import { useTask } from '@/composables/useTask';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 interface Runtime { version: string; installed: boolean; sites: string[]; extensions: string[] }
 defineProps<{ runtimes: Runtime[]; extensions: string[]; available: boolean }>();
@@ -31,9 +34,9 @@ const removeOpen = ref(false);
 </script>
 
 <template>
-    <Head title="PHP" />
-    <PageHeader title="PHP" description="Install several versions side by side. Each site picks its own.">
-        <Button variant="outline" @click="start('installApache')"><ServerIcon /> Install Apache backend</Button>
+    <Head :title="t('PHP')" />
+    <PageHeader :title="t('PHP')" :description="t('Install several versions side by side. Each site picks its own.')">
+        <Button variant="outline" @click="start('installApache')"><ServerIcon /> {{ t('Install Apache backend') }}</Button>
     </PageHeader>
 
     <ServiceDown v-if="!available" name="Core" />
@@ -44,16 +47,16 @@ const removeOpen = ref(false);
             <li v-for="r in runtimes" :key="r.version" class="flex flex-wrap items-center justify-between gap-3 p-4">
                 <div>
                     <p class="font-medium">PHP {{ r.version }}</p>
-                    <p class="text-muted-foreground text-sm">{{ r.installed ? `${r.sites.length} ${r.sites.length === 1 ? 'site' : 'sites'}` : 'Not installed' }}</p>
+                    <p class="text-muted-foreground text-sm">{{ r.installed ? `${r.sites.length} ${t(r.sites.length === 1 ? 'site' : 'sites')}` : t('Not installed') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <template v-if="r.installed">
-                        <StatusBadge status="installed" :labels="{ installed: 'Installed' }" />
-                        <Button variant="outline" size="sm" @click="extOf = r.version; extOpen = true"><PuzzleIcon /> Extensions</Button>
-                        <Button v-if="!r.sites.length" variant="outline" size="sm" class="text-destructive" @click="removing = r.version; removeOpen = true">Remove</Button>
-                        <Button v-else variant="outline" size="sm" disabled :title="r.sites.join(', ')">In use</Button>
+                        <StatusBadge status="installed" :labels="{ installed: t('Installed') }" />
+                        <Button variant="outline" size="sm" @click="extOf = r.version; extOpen = true"><PuzzleIcon /> {{ t('Extensions') }}</Button>
+                        <Button v-if="!r.sites.length" variant="outline" size="sm" class="text-destructive" @click="removing = r.version; removeOpen = true">{{ t('Remove') }}</Button>
+                        <Button v-else variant="outline" size="sm" disabled :title="r.sites.join(', ')">{{ t('In use') }}</Button>
                     </template>
-                    <Button v-else size="sm" @click="start('installPhp', r.version)">Install</Button>
+                    <Button v-else size="sm" @click="start('installPhp', r.version)">{{ t('Install') }}</Button>
                 </div>
             </li>
         </ul>
@@ -61,7 +64,7 @@ const removeOpen = ref(false);
 
     <Dialog v-model:open="extOpen">
         <DialogContent class="sm:max-w-lg">
-            <DialogHeader><DialogTitle>PHP {{ extOf }} extensions</DialogTitle><DialogDescription>Click to install or remove. Sites using this version are reloaded.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>{{ t('PHP {v} extensions', { v: extOf ?? '' }) }}</DialogTitle><DialogDescription>{{ t('Click to install or remove. Sites using this version are reloaded.') }}</DialogDescription></DialogHeader>
             <div class="flex flex-wrap gap-2">
                 <Toggle
                     v-for="e in extensions" :key="e" variant="outline" size="sm"
@@ -71,5 +74,5 @@ const removeOpen = ref(false);
             </div>
         </DialogContent>
     </Dialog>
-    <ConfirmDialog v-model:open="removeOpen" :title="`Remove PHP ${removing}?`" description="No site uses it. You can install it again later." confirm-label="Remove" @confirm="removing && start('removePhp', removing)" />
+    <ConfirmDialog v-model:open="removeOpen" :title="`Remove PHP ${removing}?`" :description="t('No site uses it. You can install it again later.')" :confirm-label="t('Remove')" @confirm="removing && start('removePhp', removing)" />
 </template>

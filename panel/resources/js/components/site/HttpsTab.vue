@@ -12,6 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { act, useBusy } from '@/composables/useActions';
 import { rpc } from '@/composables/useRpc';
 import { useTask } from '@/composables/useTask';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{ domain: string }>();
 const tls = ref<string | null>(null);
@@ -32,26 +35,26 @@ async function turnOff() { if ((await act(rpc('core', 'removeTls', props.domain)
         <Card>
             <template v-if="tls">
                 <CardHeader>
-                    <CardTitle class="flex items-center gap-2"><LockIcon class="text-success size-4" /> HTTPS is on <StatusBadge status="ok" :labels="{ ok: tls === 'www' ? `${domain} + www` : domain }" /></CardTitle>
-                    <CardDescription>Plain HTTP redirects to HTTPS. The certificate renews automatically.</CardDescription>
-                    <CardAction><Button variant="outline" @click="offOpen = true">Turn off</Button></CardAction>
+                    <CardTitle class="flex items-center gap-2"><LockIcon class="text-success size-4" /> {{ t('HTTPS is on') }} <StatusBadge status="ok" :labels="{ ok: tls === 'www' ? `${domain} + www` : domain }" /></CardTitle>
+                    <CardDescription>{{ t('Plain HTTP redirects to HTTPS. The certificate renews automatically.') }}</CardDescription>
+                    <CardAction><Button variant="outline" @click="offOpen = true">{{ t('Turn off') }}</Button></CardAction>
                 </CardHeader>
             </template>
             <template v-else>
                 <CardHeader>
-                    <CardTitle class="flex items-center gap-2"><LockOpenIcon class="text-muted-foreground size-4" /> HTTPS is off</CardTitle>
-                    <CardDescription>Issues a free Let's Encrypt certificate. The domain must already point to this server.</CardDescription>
+                    <CardTitle class="flex items-center gap-2"><LockOpenIcon class="text-muted-foreground size-4" /> {{ t('HTTPS is off') }}</CardTitle>
+                    <CardDescription>{{ t('Issues a free Let\'s Encrypt certificate. The domain must already point to this server.') }}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form class="flex max-w-md flex-col gap-4" @submit.prevent="issue">
-                        <Field orientation="horizontal"><Switch id="tls-www" v-model="www" /><FieldLabel for="tls-www">Also secure www.{{ domain }}</FieldLabel></Field>
-                        <Field><FieldLabel for="tls-email">Email for expiry notices (optional)</FieldLabel><Input id="tls-email" v-model="email" type="email" /></Field>
-                        <div><Button type="submit" :disabled="busy || task?.status === 'running'">Get certificate</Button></div>
+                        <Field orientation="horizontal"><Switch id="tls-www" v-model="www" /><FieldLabel for="tls-www">{{ t('Also secure') }} www.{{ domain }}</FieldLabel></Field>
+                        <Field><FieldLabel for="tls-email">{{ t('Email for expiry notices (optional)') }}</FieldLabel><Input id="tls-email" v-model="email" type="email" /></Field>
+                        <div><Button type="submit" :disabled="busy || task?.status === 'running'">{{ t('Get certificate') }}</Button></div>
                     </form>
                 </CardContent>
             </template>
         </Card>
         <TaskPanel :task="task" @dismiss="dismiss" />
     </div>
-    <ConfirmDialog v-model:open="offOpen" title="Turn HTTPS off for this site?" description="The site will be served over plain HTTP. The certificate is kept." confirm-label="Turn off" @confirm="turnOff" />
+    <ConfirmDialog v-model:open="offOpen" :title="t('Turn HTTPS off for this site?')" :description="t('The site will be served over plain HTTP. The certificate is kept.')" :confirm-label="t('Turn off')" @confirm="turnOff" />
 </template>

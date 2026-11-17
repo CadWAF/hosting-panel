@@ -18,6 +18,9 @@ import { Input } from '@/components/ui/input';
 import { act, useBusy } from '@/composables/useActions';
 import { rpc } from '@/composables/useRpc';
 import { useInterval, useTask } from '@/composables/useTask';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 interface Settings { installed?: boolean; hostname?: string; server_ipv4?: string; server_ipv6?: string; webmail_url?: string }
 interface Domain { name: string; mailboxes: number }
@@ -38,7 +41,7 @@ function openSettings() {
     setOpen.value = true;
 }
 async function saveSettings() {
-    const r = await run(() => act(rpc('mail', 'saveSettings', { hostname: s.hostname, server_ipv4: s.ipv4, server_ipv6: s.ipv6, webmail_url: s.webmail }), 'Mail settings saved.'));
+    const r = await run(() => act(rpc('mail', 'saveSettings', { hostname: s.hostname, server_ipv4: s.ipv4, server_ipv6: s.ipv6, webmail_url: s.webmail }), t('Mail settings saved.')));
     if (r.ok) { setOpen.value = false; reload(); }
 }
 async function install() { const r = await act(rpc('mail', 'install')); if (r.ok) follow(r.data?.id); }
@@ -61,9 +64,9 @@ async function addDomain() {
 const rmDomain = ref<string | null>(null);
 const rmDomainOpen = ref(false);
 async function delDomain() { if (rmDomain.value && (await act(rpc('mail', 'deleteDomain', rmDomain.value))).ok) reload(); }
-async function copy(v: string) { try { await navigator.clipboard.writeText(v); toast.success('Copied'); } catch { /* clipboard blocked */ } }
+async function copy(v: string) { try { await navigator.clipboard.writeText(v); toast.success(t('Copied')); } catch { /* clipboard blocked */ } }
 const tone = { ok: 'ok', wrong: 'wrong' } as Record<string, string>;
-const dnsLabels = { ok: '✓ OK', wrong: 'Wrong value', missing: 'Not found yet' };
+const dnsLabels = { ok: '✓ OK', wrong: t('Wrong value'), missing: t('Not found yet') };
 
 // mailboxes
 const boxOpen = ref(false);
@@ -80,7 +83,7 @@ async function addMailbox() {
     const r = await run(() => act(rpc('mail', 'addMailbox', email, box.password)));
     if (!r.ok) return;
     boxOpen.value = false;
-    secret.value = [{ label: 'Address', value: email }, { label: 'Password', value: box.password }];
+    secret.value = [{ label: t('Address'), value: email }, { label: t('Password'), value: box.password }];
     secretOpen.value = true;
     reload();
 }
@@ -91,45 +94,45 @@ async function webmail(id: number) { const r = await act(rpc('mail', 'webmail', 
 </script>
 
 <template>
-    <Head title="Mail" />
-    <PageHeader title="Mail" description="Mail domains, mailboxes and webmail. Each domain gets its own DKIM key.">
-        <Button variant="outline" :disabled="!available" @click="openSettings"><SettingsIcon /> Mail server settings</Button>
+    <Head :title="t('Mail')" />
+    <PageHeader :title="t('Mail')" :description="t('Mail domains, mailboxes and webmail. Each domain gets its own DKIM key.')">
+        <Button variant="outline" :disabled="!available" @click="openSettings"><SettingsIcon /> {{ t('Mail server settings') }}</Button>
     </PageHeader>
 
     <ServiceDown v-if="!available" name="Mail" />
 
     <Alert v-if="available && !settings.installed">
-        <AlertTitle>The mail server is not installed yet</AlertTitle>
+        <AlertTitle>{{ t('The mail server is not installed yet') }}</AlertTitle>
         <AlertDescription>
-            <p>{{ settings.hostname ? 'Installs Postfix, Dovecot, Rspamd and Roundcube and configures them.' : 'Set the mail hostname and webmail address first.' }}</p>
+            <p>{{ settings.hostname ? t('Installs Postfix, Dovecot, Rspamd and Roundcube and configures them.') : t('Set the mail hostname and webmail address first.') }}</p>
             <div class="mt-2 flex gap-2">
-                <Button variant="outline" size="sm" @click="openSettings">Settings</Button>
-                <Button size="sm" :disabled="!settings.hostname" @click="install">Install mail server</Button>
+                <Button variant="outline" size="sm" @click="openSettings">{{ t('Settings') }}</Button>
+                <Button size="sm" :disabled="!settings.hostname" @click="install">{{ t('Install mail server') }}</Button>
             </div>
         </AlertDescription>
     </Alert>
     <TaskPanel :task="task" @dismiss="dismiss" />
 
     <form v-if="available" class="flex gap-2" @submit.prevent="addDomain">
-        <Input v-model="newDomain" placeholder="example.com or mail.sub.example.com" aria-label="Mail domain" />
-        <Button type="submit" class="shrink-0" :disabled="busy"><PlusIcon /> Add mail domain</Button>
+        <Input v-model="newDomain" :placeholder="t('example.com or mail.sub.example.com')" :aria-label="t('Mail domain')" />
+        <Button type="submit" class="shrink-0" :disabled="busy"><PlusIcon /> {{ t('Add mail domain') }}</Button>
     </form>
 
     <Card v-for="d in domains" :key="d.name" class="gap-3 p-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div><p class="font-medium">{{ d.name }}</p><p class="text-muted-foreground text-sm">{{ d.mailboxes }} mailboxes</p></div>
+            <div><p class="font-medium">{{ d.name }}</p><p class="text-muted-foreground text-sm">{{ d.mailboxes }} {{ t('mailboxes') }}</p></div>
             <div class="flex gap-2">
-                <Button variant="outline" size="sm" @click="showDns(d.name)">DNS records</Button>
-                <Button variant="outline" size="sm" @click="openBox(d.name)"><MailPlusIcon /> New mailbox</Button>
-                <Button variant="outline" size="icon-sm" class="text-destructive" :aria-label="`Delete ${d.name}`" @click="rmDomain = d.name; rmDomainOpen = true"><Trash2Icon /></Button>
+                <Button variant="outline" size="sm" @click="showDns(d.name)">{{ t('DNS records') }}</Button>
+                <Button variant="outline" size="sm" @click="openBox(d.name)"><MailPlusIcon /> {{ t('New mailbox') }}</Button>
+                <Button variant="outline" size="icon-sm" class="text-destructive" :aria-label="`${t('Delete')} ${d.name}`" @click="rmDomain = d.name; rmDomainOpen = true"><Trash2Icon /></Button>
             </div>
         </div>
         <ul v-if="mailboxes[d.name]?.length" class="divide-y border-t">
             <li v-for="m in mailboxes[d.name]" :key="m.id" class="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                 <span>{{ m.email }}</span>
                 <span class="flex gap-2">
-                    <Button size="xs" @click="webmail(m.id)"><ExternalLinkIcon /> Open webmail</Button>
-                    <Button variant="outline" size="icon-xs" class="text-destructive" :aria-label="`Delete ${m.email}`" @click="rmBox = m; rmBoxOpen = true"><Trash2Icon /></Button>
+                    <Button size="xs" @click="webmail(m.id)"><ExternalLinkIcon /> {{ t('Open webmail') }}</Button>
+                    <Button variant="outline" size="icon-xs" class="text-destructive" :aria-label="`${t('Delete')} ${m.email}`" @click="rmBox = m; rmBoxOpen = true"><Trash2Icon /></Button>
                 </span>
             </li>
         </ul>
@@ -138,23 +141,23 @@ async function webmail(id: number) { const r = await act(rpc('mail', 'webmail', 
     <Dialog v-model:open="dnsOpen">
         <DialogContent class="max-h-[90svh] overflow-y-auto sm:max-w-3xl">
             <DialogHeader>
-                <DialogTitle>DNS records for {{ dnsFor }}</DialogTitle>
-                <DialogDescription>Add these at your DNS provider. Changes can take a while to appear. Click a value to copy it.</DialogDescription>
+                <DialogTitle>{{ t('DNS records for {name}', { name: dnsFor ?? '' }) }}</DialogTitle>
+                <DialogDescription>{{ t('Add these at your DNS provider. Changes can take a while to appear. Click a value to copy it.') }}</DialogDescription>
             </DialogHeader>
             <ul class="flex flex-col gap-2">
                 <li v-for="(r, i) in records" :key="i" class="flex flex-col gap-1.5 rounded-lg border p-3 text-sm">
                     <div class="flex items-center justify-between gap-2"><b>{{ r.purpose }}</b><StatusBadge :status="tone[r.status] ?? r.status" :labels="{ ok: dnsLabels.ok, wrong: dnsLabels.wrong, missing: dnsLabels.missing }" /></div>
                     <div class="grid gap-1 sm:grid-cols-[4rem_1fr]">
-                        <span class="text-muted-foreground">{{ r.type }}</span><button class="text-left font-mono break-all" title="Click to copy" @click="copy(r.name)">{{ r.name }}</button>
-                        <span class="text-muted-foreground">Value</span><button class="text-left font-mono break-all" title="Click to copy" @click="copy(r.value)">{{ r.value }}</button>
+                        <span class="text-muted-foreground">{{ r.type }}</span><button class="text-left font-mono break-all" :title="t('Click to copy')" @click="copy(r.name)">{{ r.name }}</button>
+                        <span class="text-muted-foreground">{{ t('Value') }}</span><button class="text-left font-mono break-all" :title="t('Click to copy')" @click="copy(r.value)">{{ r.value }}</button>
                     </div>
-                    <p v-if="r.where !== 'dns'" class="text-muted-foreground text-xs">Set this with your hosting provider, not in DNS.</p>
-                    <p v-if="r.found && r.status !== 'ok'" class="text-warning text-xs">Currently found: {{ r.found }}</p>
+                    <p v-if="r.where !== 'dns'" class="text-muted-foreground text-xs">{{ t('Set this with your hosting provider, not in DNS.') }}</p>
+                    <p v-if="r.found && r.status !== 'ok'" class="text-warning text-xs">{{ t('Currently found') }}: {{ r.found }}</p>
                 </li>
             </ul>
             <DialogFooter>
-                <Button variant="outline" @click="dnsFor && showDns(dnsFor)"><RefreshCwIcon /> Check again</Button>
-                <Button @click="dnsOpen = false">Done</Button>
+                <Button variant="outline" @click="dnsFor && showDns(dnsFor)"><RefreshCwIcon /> {{ t('Check again') }}</Button>
+                <Button @click="dnsOpen = false">{{ t('Done') }}</Button>
             </DialogFooter>
         </DialogContent>
     </Dialog>
@@ -162,12 +165,12 @@ async function webmail(id: number) { const r = await act(rpc('mail', 'webmail', 
     <Dialog v-model:open="boxOpen">
         <DialogContent class="sm:max-w-md">
             <form class="flex flex-col gap-4" @submit.prevent="addMailbox">
-                <DialogHeader><DialogTitle>New mailbox</DialogTitle><DialogDescription>On {{ box.domain }}</DialogDescription></DialogHeader>
+                <DialogHeader><DialogTitle>{{ t('New mailbox') }}</DialogTitle><DialogDescription>On {{ box.domain }}</DialogDescription></DialogHeader>
                 <FieldGroup>
-                    <Field><FieldLabel for="b-local">Address</FieldLabel><div class="flex items-center gap-2"><Input id="b-local" v-model="box.local" autocomplete="off" required /><span class="text-muted-foreground shrink-0 text-sm">@{{ box.domain }}</span></div></Field>
-                    <Field><FieldLabel for="b-pw">Password (10+ characters)</FieldLabel><div class="flex gap-2"><Input id="b-pw" v-model="box.password" autocomplete="off" class="font-mono" required /><Button type="button" variant="outline" class="shrink-0" @click="genPassword">Generate</Button></div></Field>
+                    <Field><FieldLabel for="b-local">{{ t('Address') }}</FieldLabel><div class="flex items-center gap-2"><Input id="b-local" v-model="box.local" autocomplete="off" required /><span class="text-muted-foreground shrink-0 text-sm">@{{ box.domain }}</span></div></Field>
+                    <Field><FieldLabel for="b-pw">{{ t('Password (10+ characters)') }}</FieldLabel><div class="flex gap-2"><Input id="b-pw" v-model="box.password" autocomplete="off" class="font-mono" required /><Button type="button" variant="outline" class="shrink-0" @click="genPassword">{{ t('Generate') }}</Button></div></Field>
                 </FieldGroup>
-                <DialogFooter><Button type="button" variant="outline" @click="boxOpen = false">Cancel</Button><Button type="submit" :disabled="busy">Create</Button></DialogFooter>
+                <DialogFooter><Button type="button" variant="outline" @click="boxOpen = false">{{ t('Cancel') }}</Button><Button type="submit" :disabled="busy">{{ t('Create') }}</Button></DialogFooter>
             </form>
         </DialogContent>
     </Dialog>
@@ -175,19 +178,19 @@ async function webmail(id: number) { const r = await act(rpc('mail', 'webmail', 
     <Dialog v-model:open="setOpen">
         <DialogContent class="sm:max-w-md">
             <form class="flex flex-col gap-4" @submit.prevent="saveSettings">
-                <DialogHeader><DialogTitle>Mail server settings</DialogTitle><DialogDescription>Used for the server's DNS checklist and webmail.</DialogDescription></DialogHeader>
+                <DialogHeader><DialogTitle>{{ t('Mail server settings') }}</DialogTitle><DialogDescription>{{ t('Used for the server\'s DNS checklist and webmail.') }}</DialogDescription></DialogHeader>
                 <FieldGroup>
-                    <Field><FieldLabel for="s-host">Mail server hostname</FieldLabel><Input id="s-host" v-model="s.hostname" placeholder="mail.example.com" required /></Field>
-                    <Field><FieldLabel for="s-v4">Server IPv4</FieldLabel><Input id="s-v4" v-model="s.ipv4" placeholder="203.0.113.10" /></Field>
-                    <Field><FieldLabel for="s-v6">Server IPv6 (optional)</FieldLabel><Input id="s-v6" v-model="s.ipv6" /></Field>
-                    <Field><FieldLabel for="s-web">Webmail address</FieldLabel><Input id="s-web" v-model="s.webmail" placeholder="https://webmail.example.com" required /></Field>
+                    <Field><FieldLabel for="s-host">{{ t('Mail server hostname') }}</FieldLabel><Input id="s-host" v-model="s.hostname" placeholder="mail.example.com" required /></Field>
+                    <Field><FieldLabel for="s-v4">{{ t('Server IPv4') }}</FieldLabel><Input id="s-v4" v-model="s.ipv4" placeholder="203.0.113.10" /></Field>
+                    <Field><FieldLabel for="s-v6">{{ t('Server IPv6 (optional)') }}</FieldLabel><Input id="s-v6" v-model="s.ipv6" /></Field>
+                    <Field><FieldLabel for="s-web">{{ t('Webmail address') }}</FieldLabel><Input id="s-web" v-model="s.webmail" placeholder="https://webmail.example.com" required /></Field>
                 </FieldGroup>
-                <DialogFooter><Button type="button" variant="outline" @click="setOpen = false">Cancel</Button><Button type="submit" :disabled="busy">Save</Button></DialogFooter>
+                <DialogFooter><Button type="button" variant="outline" @click="setOpen = false">{{ t('Cancel') }}</Button><Button type="submit" :disabled="busy">{{ t('Save') }}</Button></DialogFooter>
             </form>
         </DialogContent>
     </Dialog>
 
-    <SecretDialog v-model:open="secretOpen" title="Mailbox created" description="The password is shown only now and is not stored in readable form." :rows="secret" />
-    <ConfirmDialog v-model:open="rmDomainOpen" title="Delete this mail domain?" :description="`${rmDomain} and its mailboxes are removed.`" @confirm="delDomain" />
-    <ConfirmDialog v-model:open="rmBoxOpen" title="Delete this mailbox?" description="Its mail is moved aside, not erased." @confirm="delBox" />
+    <SecretDialog v-model:open="secretOpen" :title="t('Mailbox created')" :description="t('The password is shown only now and is not stored in readable form.')" :rows="secret" />
+    <ConfirmDialog v-model:open="rmDomainOpen" :title="t('Delete this mail domain?')" :description="`${rmDomain} and its mailboxes are removed.`" @confirm="delDomain" />
+    <ConfirmDialog v-model:open="rmBoxOpen" :title="t('Delete this mailbox?')" :description="t('Its mail is moved aside, not erased.')" @confirm="delBox" />
 </template>

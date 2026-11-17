@@ -10,6 +10,9 @@ import CronTab from '@/components/site/CronTab.vue';
 import LogsTab from '@/components/site/LogsTab.vue';
 import HttpsTab from '@/components/site/HttpsTab.vue';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{ domain: string; site: { tls?: string }; available: boolean }>();
 const tab = ref(new URLSearchParams(location.search).get('tab') ?? 'files');
@@ -24,17 +27,17 @@ function onTab(v: string | number) {
 <template>
     <Head :title="domain" />
     <div>
-        <Link href="/sites" class="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1 text-sm"><ArrowLeftIcon class="size-3.5" /> Sites</Link>
+        <Link href="/sites" class="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1 text-sm"><ArrowLeftIcon class="size-3.5" /> {{ t('Sites') }}</Link>
         <PageHeader :title="domain" />
     </div>
     <ServiceDown v-if="!available" name="Core" />
     <Tabs v-else :model-value="tab" @update:model-value="onTab">
         <TabsList class="flex-wrap">
-            <TabsTrigger value="files">Files</TabsTrigger>
-            <TabsTrigger value="ssh">SSH</TabsTrigger>
-            <TabsTrigger value="cron">Cron</TabsTrigger>
-            <TabsTrigger value="logs">Logs</TabsTrigger>
-            <TabsTrigger value="https">HTTPS</TabsTrigger>
+            <TabsTrigger value="files">{{ t('Files') }}</TabsTrigger>
+            <TabsTrigger value="ssh">{{ t('SSH') }}</TabsTrigger>
+            <TabsTrigger value="cron">{{ t('Cron') }}</TabsTrigger>
+            <TabsTrigger value="logs">{{ t('Logs') }}</TabsTrigger>
+            <TabsTrigger value="https">{{ t('HTTPS') }}</TabsTrigger>
         </TabsList>
         <TabsContent value="files" class="mt-4"><FilesTab :domain="domain" /></TabsContent>
         <TabsContent value="ssh" class="mt-4"><SshTab :domain="domain" /></TabsContent>

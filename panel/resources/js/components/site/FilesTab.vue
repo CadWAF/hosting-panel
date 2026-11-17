@@ -11,6 +11,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { act, useBusy } from '@/composables/useActions';
 import { rpc, upload } from '@/composables/useRpc';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 interface Entry { name: string; dir: boolean; mode: string; size: number }
 const props = defineProps<{ domain: string }>();
@@ -53,7 +56,7 @@ async function onUpload(ev: Event) {
     const f = input.files?.[0];
     if (!f) return;
     const r = await run(() => upload(props.domain, path.value, f));
-    r.ok ? toast.success(`Uploaded ${f.name}`) : toast.error(r.error ?? 'Upload failed');
+    r.ok ? toast.success(t('Uploaded {name}', { name: f.name })) : toast.error(r.error ?? t('Upload failed'));
     input.value = '';
     load();
 }
@@ -73,7 +76,7 @@ async function trash(e: Entry) {
     if ((await act(rpc('core', 'fileOp', props.domain, 'trash', { path: join(e.name) }), `${e.name} moved to trash`)).ok) load();
 }
 async function extract(e: Entry) {
-    if ((await act(rpc('core', 'fileOp', props.domain, 'extract', { path: join(e.name), dest: path.value }), `Extracted ${e.name}`)).ok) load();
+    if ((await act(rpc('core', 'fileOp', props.domain, 'extract', { path: join(e.name), dest: path.value }), t('Extracted {name}', { name: e.name }))).ok) load();
 }
 
 // editor
@@ -96,15 +99,15 @@ const kb = (n: number) => (n / 1024).toFixed(1) + ' KB';
 <template>
     <div class="flex flex-col gap-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <nav class="flex flex-wrap items-center gap-1 text-sm" aria-label="Path">
+            <nav class="flex flex-wrap items-center gap-1 text-sm" :aria-label="t('Path')">
                 <Button variant="ghost" size="sm" @click="go('')">~</Button>
                 <template v-for="c in crumbs" :key="c.path"><span class="text-muted-foreground">/</span><Button variant="ghost" size="sm" @click="go(c.path)">{{ c.name }}</Button></template>
             </nav>
             <div class="flex flex-wrap items-center gap-2">
-                <Input v-model="newName" placeholder="Name" aria-label="Name for new file or folder" class="w-40" @keydown.enter.prevent="newFile" />
-                <Button variant="outline" size="sm" :disabled="!newName.trim()" @click="newFile"><FilePlusIcon /> File</Button>
-                <Button variant="outline" size="sm" :disabled="!newName.trim()" @click="newFolder"><FolderPlusIcon /> Folder</Button>
-                <Button as-child size="sm" :disabled="busy"><label class="cursor-pointer"><UploadIcon /> {{ busy ? 'Uploading…' : 'Upload' }}<input type="file" class="sr-only" @change="onUpload" /></label></Button>
+                <Input v-model="newName" :placeholder="t('Name')" :aria-label="t('Name for new file or folder')" class="w-40" @keydown.enter.prevent="newFile" />
+                <Button variant="outline" size="sm" :disabled="!newName.trim()" @click="newFile"><FilePlusIcon /> {{ t('File') }}</Button>
+                <Button variant="outline" size="sm" :disabled="!newName.trim()" @click="newFolder"><FolderPlusIcon /> {{ t('Folder') }}</Button>
+                <Button as-child size="sm" :disabled="busy"><label class="cursor-pointer"><UploadIcon /> {{ busy ? t('Uploading…') : t('Upload') }}<input type="file" class="sr-only" @change="onUpload" /></label></Button>
             </div>
         </div>
 
@@ -121,34 +124,34 @@ const kb = (n: number) => (n / 1024).toFixed(1) + ' KB';
                         <span class="text-muted-foreground shrink-0 font-mono text-xs">{{ e.mode }}<template v-if="!e.dir"> · {{ kb(e.size) }}</template></span>
                     </div>
                     <div class="flex gap-1">
-                        <Button v-if="!e.dir" variant="ghost" size="icon-sm" :aria-label="`Edit ${e.name}`" @click="edit(e)"><PencilIcon /></Button>
-                        <Button v-if="!e.dir" as-child variant="ghost" size="icon-sm"><a :href="dl(e)" :aria-label="`Download ${e.name}`"><DownloadIcon /></a></Button>
-                        <Button v-if="e.name.toLowerCase().endsWith('.zip')" variant="ghost" size="icon-sm" :aria-label="`Extract ${e.name}`" @click="extract(e)"><PackageOpenIcon /></Button>
-                        <Button variant="ghost" size="icon-sm" :aria-label="`Rename ${e.name}`" @click="startRename(e)"><TextCursorInputIcon /></Button>
-                        <Button variant="ghost" size="icon-sm" class="text-destructive" :aria-label="`Move ${e.name} to trash`" @click="trash(e)"><Trash2Icon /></Button>
+                        <Button v-if="!e.dir" variant="ghost" size="icon-sm" :aria-label="`${t('Edit')} ${e.name}`" @click="edit(e)"><PencilIcon /></Button>
+                        <Button v-if="!e.dir" as-child variant="ghost" size="icon-sm"><a :href="dl(e)" :aria-label="`${t('Download')} ${e.name}`"><DownloadIcon /></a></Button>
+                        <Button v-if="e.name.toLowerCase().endsWith('.zip')" variant="ghost" size="icon-sm" :aria-label="`${t('Extract')} ${e.name}`" @click="extract(e)"><PackageOpenIcon /></Button>
+                        <Button variant="ghost" size="icon-sm" :aria-label="`${t('Rename')} ${e.name}`" @click="startRename(e)"><TextCursorInputIcon /></Button>
+                        <Button variant="ghost" size="icon-sm" class="text-destructive" :aria-label="t('Move {name} to trash', { name: e.name })" @click="trash(e)"><Trash2Icon /></Button>
                     </div>
                 </li>
             </ul>
-            <EmptyState v-if="!entries.length && !path" title="This folder is empty" class="border-0" />
-            <p v-else-if="!entries.length" class="text-muted-foreground p-6 text-center text-sm">This folder is empty</p>
+            <EmptyState v-if="!entries.length && !path" :title="t('This folder is empty')" class="border-0" />
+            <p v-else-if="!entries.length" class="text-muted-foreground p-6 text-center text-sm">{{ t('This folder is empty') }}</p>
         </Card>
     </div>
 
     <Dialog v-model:open="renameOpen">
         <DialogContent class="sm:max-w-sm">
             <form class="flex flex-col gap-4" @submit.prevent="rename">
-                <DialogHeader><DialogTitle>Rename</DialogTitle><DialogDescription>{{ renaming?.name }}</DialogDescription></DialogHeader>
-                <Input v-model="renameTo" aria-label="New name" required />
-                <DialogFooter><Button type="button" variant="outline" @click="renameOpen = false">Cancel</Button><Button type="submit">Rename</Button></DialogFooter>
+                <DialogHeader><DialogTitle>{{ t('Rename') }}</DialogTitle><DialogDescription>{{ renaming?.name }}</DialogDescription></DialogHeader>
+                <Input v-model="renameTo" :aria-label="t('New name')" required />
+                <DialogFooter><Button type="button" variant="outline" @click="renameOpen = false">{{ t('Cancel') }}</Button><Button type="submit">{{ t('Rename') }}</Button></DialogFooter>
             </form>
         </DialogContent>
     </Dialog>
 
     <Dialog v-model:open="editOpen">
         <DialogContent class="flex h-[85svh] flex-col sm:max-w-4xl">
-            <DialogHeader><DialogTitle class="truncate font-mono text-base">{{ editPath }}</DialogTitle><DialogDescription>Edit the file's contents.</DialogDescription></DialogHeader>
-            <Textarea v-model="content" class="min-h-0 flex-1 resize-none font-mono text-sm" spellcheck="false" aria-label="File contents" />
-            <DialogFooter><Button variant="outline" @click="editOpen = false">Cancel</Button><Button :disabled="busy" @click="save">Save</Button></DialogFooter>
+            <DialogHeader><DialogTitle class="truncate font-mono text-base">{{ editPath }}</DialogTitle><DialogDescription>{{ t('Edit the file\'s contents.') }}</DialogDescription></DialogHeader>
+            <Textarea v-model="content" class="min-h-0 flex-1 resize-none font-mono text-sm" spellcheck="false" :aria-label="t('File contents')" />
+            <DialogFooter><Button variant="outline" @click="editOpen = false">{{ t('Cancel') }}</Button><Button :disabled="busy" @click="save">{{ t('Save') }}</Button></DialogFooter>
         </DialogContent>
     </Dialog>
 </template>

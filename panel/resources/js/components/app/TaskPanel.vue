@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { TaskInfo } from '@/composables/useTask';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{ task: TaskInfo | null; pending?: boolean }>();
 defineEmits<{ dismiss: [] }>();
@@ -24,12 +27,12 @@ const tone = { running: 'secondary', done: 'default', failed: 'destructive', int
             <CardHeader>
                 <CardTitle>{{ task.title }}</CardTitle>
                 <CardAction class="flex items-center gap-2">
-                    <Badge :variant="tone[task.status]">{{ task.status }}</Badge>
-                    <Button v-if="task.status !== 'running'" variant="ghost" size="icon-sm" aria-label="Dismiss" @click="$emit('dismiss')"><XIcon /></Button>
+                    <Badge :variant="tone[task.status]">{{ t(task.status) }}</Badge>
+                    <Button v-if="task.status !== 'running'" variant="ghost" size="icon-sm" :aria-label="t('Dismiss')" @click="$emit('dismiss')"><XIcon /></Button>
                 </CardAction>
             </CardHeader>
             <CardContent>
-                <pre ref="log" class="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">{{ task.log || 'Starting…' }}</pre>
+                <pre ref="log" class="bg-muted max-h-64 overflow-auto rounded-md p-3 text-xs whitespace-pre-wrap">{{ task.log || t('Starting…') }}</pre>
             </CardContent>
         </template>
         <CardContent v-else class="flex flex-col gap-3">

@@ -3,6 +3,9 @@ import { ref } from 'vue';
 import { CheckIcon, CopyIcon } from '@lucide/vue';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useI18n } from '@/composables/useI18n';
+
+const { t } = useI18n();
 
 export interface SecretRow {
     label: string;
@@ -28,7 +31,7 @@ async function copy(v: string) {
         <DialogContent class="sm:max-w-lg">
             <DialogHeader>
                 <DialogTitle>{{ title }}</DialogTitle>
-                <DialogDescription>{{ description ?? 'This is shown only once and cannot be retrieved later.' }}</DialogDescription>
+                <DialogDescription>{{ description ?? t('This is shown only once and cannot be retrieved later.') }}</DialogDescription>
             </DialogHeader>
             <dl class="flex flex-col gap-3">
                 <div v-for="r in rows" :key="r.label" class="flex flex-col gap-1">
@@ -36,14 +39,14 @@ async function copy(v: string) {
                     <dd class="flex items-start gap-2">
                         <pre v-if="multiline" class="bg-muted max-h-48 min-w-0 flex-1 overflow-auto rounded-md p-3 text-xs break-all whitespace-pre-wrap select-all">{{ r.value }}</pre>
                         <code v-else class="bg-muted min-w-0 flex-1 rounded-md px-3 py-2 text-sm break-all select-all">{{ r.value }}</code>
-                        <Button variant="outline" size="icon" :aria-label="`Copy ${r.label}`" @click="copy(r.value)">
+                        <Button variant="outline" size="icon" :aria-label="`${t('Copy')} ${r.label}`" @click="copy(r.value)">
                             <CheckIcon v-if="copied === r.value" />
                             <CopyIcon v-else />
                         </Button>
                     </dd>
                 </div>
             </dl>
-            <DialogFooter><Button @click="open = false">I saved it</Button></DialogFooter>
+            <DialogFooter><Button @click="open = false">{{ t('I saved it') }}</Button></DialogFooter>
         </DialogContent>
     </Dialog>
 </template>
