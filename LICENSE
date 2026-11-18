@@ -1,0 +1,33 @@
+Hosting Panel Personal Use License
+
+Copyright (c) 2026 Revabrio. All rights reserved.
+
+1. Grant. Permission is granted, free of charge, to any individual to download, install, run, study and modify
+   this software (the "Software") for that individual's own personal, non-commercial use.
+
+2. Personal use means use by a private individual for their own purposes, on servers they control, with no
+   commercial purpose. Hosting or administering sites, services, mail or data for a business, an employer, a
+   client or any other third party, or for any activity that generates revenue directly or indirectly, is not
+   personal use.
+
+3. Commercial use is not permitted. Without a separate written permission from the copyright holder you may not
+   use the Software commercially, sell, sublicense, rent or lease it, offer it as a hosted or managed service,
+   or include it in a product or service that is sold or offered for payment.
+
+4. Redistribution. You may not redistribute the Software or modified versions of it, in source or binary form,
+   except that you may keep a public fork on GitHub for the sole purpose of proposing changes back to this
+   repository. Any copy must keep this license and the copyright notice.
+
+5. Third-party components. The Software uses third-party open-source components and can download others
+   (for example phpMyAdmin and the CadWAF Firewall). They remain under their own licenses, which this license does
+   not change.
+
+6. No warranty. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+   IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+   A control panel runs with administrative access to a server; you use it at your own risk.
+
+7. Termination. This license ends automatically if you breach it. All rights not expressly granted are reserved.
+
+For commercial licensing or any other permission, contact the copyright holder through the GitHub repository.

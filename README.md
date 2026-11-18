@@ -198,4 +198,4 @@ Report vulnerabilities privately to the repository owner rather than in a public
 
 ## License
 
-No license has been chosen yet, so all rights are reserved by the author until one is added.
+Free for **personal, non-commercial use only**. Commercial use, including running it for clients, an employer or a business, selling it or offering it as a service, needs the author's written permission. See [LICENSE](LICENSE).
