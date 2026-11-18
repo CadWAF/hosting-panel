@@ -9,3 +9,7 @@
 /panel/storage/framework/*/*
 .phpunit.result.cache
 /dev/bin/
+
+# Local agent tooling
+/.agents/
+/.claude/
