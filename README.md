@@ -129,7 +129,7 @@ Run the three installation commands again with the new build. Nothing is reset. 
 
 [CadWAF Firewall](https://github.com/CadWAF/firewall) is an open-source eBPF/XDP host firewall: default-deny, per-port rules, allow and block lists and a record of dropped traffic. The Panel manages it from **Security → CadWAF**.
 
-- **Install** downloads the newest published release for the server's CPU, verifies its SHA-256 against the digest GitHub publishes and refuses to install it without one. If GitHub is unreachable it falls back to a copy bundled by `make dist` (from `FIREWALL_SRC`, default empty, optional).
+- **Install** downloads the newest published release for the server's CPU, verifies its SHA-256 against the digest GitHub publishes and refuses to install it without one. If GitHub is unreachable it falls back to an optional offline copy: run `make dist FIREWALL_SRC=/path/to/firewall-checkout` to bundle one.
 - At first start the ports already in use (SSH, 80, 443 and anything listening publicly) stay open and the administrator's current address is allow-listed. Outbound filtering starts off.
 - **Update** appears when a newer release is published. If the new version does not come up, the previous binaries are put back.
 - Manage ports, allow and block lists, rules and outbound filtering, and read the drop log. **Emergency off** detaches the filter.
