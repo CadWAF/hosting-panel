@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import { DatabaseIcon, ExternalLinkIcon, KeyRoundIcon, PlusIcon, Trash2Icon } from '@lucide/vue';
+import { ActivityIcon, DatabaseIcon, ExternalLinkIcon, KeyRoundIcon, PlusIcon, Trash2Icon } from '@lucide/vue';
 import PageHeader from '@/components/app/PageHeader.vue';
 import ServiceDown from '@/components/app/ServiceDown.vue';
 import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
@@ -19,6 +19,7 @@ import { act, useBusy } from '@/composables/useActions';
 import { rpc } from '@/composables/useRpc';
 import { useTask } from '@/composables/useTask';
 import { useI18n } from '@/composables/useI18n';
+import { bytes, duration } from '@/lib/format';
 
 const { t } = useI18n();
 
@@ -48,6 +49,29 @@ const versions = reactive<Record<string, string>>({});
 
 async function install(e: Engine) {
     const r = await act(rpc('db', 'installEngine', e.engine, versions[e.engine] ?? e.versions[0]));
+    if (r.ok) follow(r.data?.id);
+}
+
+// ---- server statistics and removal ----
+interface Stats { engine: string; running: boolean; version: string; uptime: number; managed: number; databases: string[]; size: number; connections: number; queries: number; removable: boolean; reason?: string }
+const stats = ref<Stats | null>(null);
+const statsOpen = ref(false);
+const statsLoading = ref(false);
+async function showStats(e: Engine) {
+    stats.value = null;
+    statsOpen.value = true;
+    statsLoading.value = true;
+    const r = await rpc('db', 'engineStats', e.engine);
+    statsLoading.value = false;
+    if (r.ok) stats.value = r.data as Stats;
+    else statsOpen.value = false;
+}
+const engineDbs = (e: Engine) => props.databases.filter((d) => d.engine.toLowerCase() === e.engine.toLowerCase()).length;
+const removingEngine = ref<Engine | null>(null);
+const removeEngineOpen = ref(false);
+async function removeEngine() {
+    if (!removingEngine.value) return;
+    const r = await act(rpc('db', 'removeEngine', removingEngine.value.engine));
     if (r.ok) follow(r.data?.id);
 }
 
@@ -97,7 +121,12 @@ async function remove() {
                 <CardTitle>{{ e.engine }}</CardTitle>
                 <CardAction><StatusBadge :status="e.installed ? 'installed' : 'not installed'" :labels="{ installed: t('Installed') }" /></CardAction>
             </CardHeader>
-            <CardContent v-if="!e.installed" class="flex gap-2">
+            <CardContent v-if="e.installed" class="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" @click="showStats(e)"><ActivityIcon /> {{ t('Statistics') }}</Button>
+                <Button variant="outline" size="sm" class="text-destructive" :disabled="engineDbs(e) > 0 || !!task" :title="engineDbs(e) > 0 ? t('Delete its databases first') : ''" @click="removingEngine = e; removeEngineOpen = true"><Trash2Icon /> {{ t('Remove server') }}</Button>
+                <p v-if="engineDbs(e) > 0" class="text-muted-foreground w-full text-xs">{{ t('{n} database(s) on this server. Delete them first to remove it.', { n: engineDbs(e) }) }}</p>
+            </CardContent>
+            <CardContent v-else class="flex gap-2">
                 <Select :model-value="versions[e.engine] ?? e.versions[0]" @update:model-value="(v) => (versions[e.engine] = String(v))">
                     <SelectTrigger class="w-full" :aria-label="`${e.engine} version`"><SelectValue /></SelectTrigger>
                     <SelectContent><SelectItem v-for="v in e.versions" :key="v" :value="v">{{ v }}</SelectItem></SelectContent>
@@ -106,6 +135,30 @@ async function remove() {
             </CardContent>
         </Card>
     </section>
+
+    <Dialog v-model:open="statsOpen">
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{ stats?.engine ?? '' }} · {{ t('Statistics') }}</DialogTitle>
+                <DialogDescription>{{ t('Live figures from the database server.') }}</DialogDescription>
+            </DialogHeader>
+            <p v-if="statsLoading" class="text-muted-foreground text-sm">{{ t('Loading…') }}</p>
+            <template v-else-if="stats">
+                <p v-if="!stats.running" class="text-destructive text-sm" role="alert">{{ t('The server did not answer. Is it running?') }}</p>
+                <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <dt class="text-muted-foreground">{{ t('Version') }}</dt><dd class="font-mono">{{ stats.version || '—' }}</dd>
+                    <dt class="text-muted-foreground">{{ t('Uptime') }}</dt><dd>{{ stats.running ? duration(stats.uptime) : '—' }}</dd>
+                    <dt class="text-muted-foreground">{{ t('Databases') }}</dt><dd>{{ stats.databases.length }} <span class="text-muted-foreground">({{ t('{n} created here', { n: stats.managed }) }})</span></dd>
+                    <dt class="text-muted-foreground">{{ t('Data size') }}</dt><dd>{{ bytes(stats.size) }}</dd>
+                    <dt class="text-muted-foreground">{{ t('Open connections') }}</dt><dd>{{ stats.connections.toLocaleString() }}</dd>
+                    <dt class="text-muted-foreground">{{ t('Queries since start') }}</dt><dd>{{ stats.queries.toLocaleString() }}</dd>
+                </dl>
+                <p v-if="stats.databases.length" class="text-muted-foreground font-mono text-xs">{{ stats.databases.join(', ') }}</p>
+                <p v-if="!stats.removable" class="text-muted-foreground text-xs">{{ t('This server cannot be removed:') }} {{ stats.reason }}</p>
+            </template>
+        </DialogContent>
+    </Dialog>
+    <ConfirmDialog v-model:open="removeEngineOpen" :title="t('Remove {name}?', { name: removingEngine?.engine ?? '' })" :description="t('The server and its packages are uninstalled. It has no databases, so no data is lost.')" :confirm-label="t('Remove server')" @confirm="removeEngine" />
 
     <TaskPanel :task="pmaTask.task.value" @dismiss="pmaTask.dismiss" />
     <Card v-if="available && installedEngines.some((e) => e !== 'PostgreSQL')" class="gap-3 py-4">

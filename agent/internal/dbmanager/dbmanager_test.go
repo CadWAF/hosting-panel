@@ -99,3 +99,80 @@ func TestInstallEngineRules(t *testing.T) {
 		t.Errorf("second install must be refused: %v", err)
 	}
 }
+
+func TestRemoveEngineRefusedWhileDatabasesExist(t *testing.T) {
+	m, r := setup(t, true)
+	real := ""
+	m.Query = func(engine, q string) (string, error) { return real, nil }
+
+	// A database created through the Panel blocks removal.
+	if _, _, err := m.Create("mariadb", "shop", ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := m.RemoveEngine("mariadb"); !errors.Is(err, ErrExists) || !strings.Contains(err.Error(), "shop") {
+		t.Fatalf("tracked database did not block: %v", err)
+	}
+	l, _ := m.List()
+	if err := m.Delete(l[0].ID); err != nil {
+		t.Fatal(err)
+	}
+
+	// So does one created outside the Panel.
+	real = "legacy\n"
+	if _, err := m.RemoveEngine("mariadb"); !errors.Is(err, ErrExists) || !strings.Contains(err.Error(), "legacy") {
+		t.Fatalf("server database did not block: %v", err)
+	}
+
+	// If the server cannot be asked, nothing is removed.
+	m.Query = func(string, string) (string, error) { return "", errors.New("connection refused") }
+	if _, err := m.RemoveEngine("mariadb"); !errors.Is(err, ErrExists) {
+		t.Fatalf("unverifiable server was removable: %v", err)
+	}
+
+	// Empty server: removal goes ahead and purges packages.
+	real = ""
+	m.Query = func(string, string) (string, error) { return "", nil }
+	tk, err := m.RemoveEngine("mariadb")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.tasks.Wait()
+	if got, _ := m.tasks.Get(tk.ID); got.Status != "done" {
+		t.Fatalf("remove: %s %s", got.Status, got.Log)
+	}
+	_ = r
+	if _, err := m.RemoveEngine("nope"); !errors.Is(err, ErrInvalid) {
+		t.Errorf("bad engine: %v", err)
+	}
+	m2, _ := setup(t, false)
+	if _, err := m2.RemoveEngine("mariadb"); !errors.Is(err, ErrNoServer) {
+		t.Errorf("not installed: %v", err)
+	}
+}
+
+func TestStatsParsesServerCounters(t *testing.T) {
+	m, _ := setup(t, true)
+	m.Query = func(engine, q string) (string, error) {
+		switch {
+		case strings.HasPrefix(q, "SELECT VERSION()"):
+			return "11.4.2-MariaDB\n", nil
+		case strings.HasPrefix(q, "SHOW GLOBAL STATUS"):
+			return "Questions\t5000\nThreads_connected\t3\nUptime\t86400\n", nil
+		case strings.Contains(q, "data_length"):
+			return "1048576\n", nil
+		case strings.Contains(q, "schemata"):
+			return "blog\nshop\n", nil
+		}
+		return "", nil
+	}
+	s, err := m.Stats("mariadb")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s.Version != "11.4.2-MariaDB" || s.Uptime != 86400 || s.Conns != 3 || s.Queries != 5000 || s.Size != 1048576 || len(s.Databases) != 2 || s.Removable || !s.Running {
+		t.Fatalf("%+v", s)
+	}
+	if _, err := m.Stats("oracle"); !errors.Is(err, ErrInvalid) {
+		t.Errorf("bad engine: %v", err)
+	}
+}

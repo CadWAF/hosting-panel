@@ -56,7 +56,9 @@ type Manager struct {
 	db    *sql.DB
 	// Installed reports whether an engine's server is present; replaceable in tests.
 	Installed func(engine string) bool
-	apt       sync.Mutex
+	// Query runs a read-only statement in an engine's admin shell and returns tab-separated rows; replaceable in tests.
+	Query func(engine, sql string) (string, error)
+	apt   sync.Mutex
 }
 
 func New(run system.Runner, t *tasks.Manager, st *store.Store) (*Manager, error) {

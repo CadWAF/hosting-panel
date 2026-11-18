@@ -23,7 +23,7 @@ class RpcController extends Controller
             'removeExtension', 'installApache', 'site', 'issueTls', 'removeTls', 'task', 'sshKeys', 'addSshKey', 'generateSshKey', 'removeSshKey',
             'cron', 'addCron', 'removeCron', 'log', 'files', 'readFile', 'writeFile', 'fileOp', 'searchFiles', 'composer', 'runComposer',
             'installPhpMyAdmin', 'removePhpMyAdmin']],
-        'db' => [DbManagerClient::class, ['installEngine', 'createDatabase', 'resetPassword', 'deleteDatabase', 'task']],
+        'db' => [DbManagerClient::class, ['installEngine', 'removeEngine', 'engineStats', 'createDatabase', 'resetPassword', 'deleteDatabase', 'task']],
         'backup' => [BackupClient::class, ['addDestination', 'testDestination', 'deleteDestination', 'addJob', 'deleteJob', 'runJob', 'restore', 'installBorg', 'task']],
         'system' => [SystemClient::class, ['stats', 'docker', 'services', 'installSoftware', 'removeSoftware', 'serviceAction', 'setJail', 'setF2bDefaults', 'ban', 'unban',
             'enableFirewall', 'disableFirewall', 'addRule', 'deleteRule', 'setSsh', 'checkUpdates', 'applyUpdates', 'reboot', 'addCron', 'updateCron',

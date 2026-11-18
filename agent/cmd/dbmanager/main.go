@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -42,6 +43,32 @@ func main() {
 	must(err)
 	if *dry {
 		m.Installed = func(string) bool { return true }
+		m.Query = func(engine, q string) (string, error) { // plausible answers for the development host
+			switch {
+			case strings.Contains(q, "version()"), strings.HasPrefix(q, "SELECT VERSION()"):
+				return "11.4.2-MariaDB\n", nil
+			case strings.HasPrefix(q, "SHOW GLOBAL STATUS"):
+				return "Questions\t184233\nThreads_connected\t4\nUptime\t93784\n", nil
+			case strings.Contains(q, "pg_postmaster_start_time"):
+				return "93784\n", nil
+			case strings.Contains(q, "pg_database_size"), strings.Contains(q, "data_length"):
+				return "73400320\n", nil
+			case strings.Contains(q, "pg_stat_activity"):
+				return "4\n", nil
+			case strings.Contains(q, "xact_commit"):
+				return "52110\n", nil
+			case strings.Contains(q, "schemata"), strings.Contains(q, "pg_database WHERE NOT"):
+				l, _ := m.List()
+				var b strings.Builder
+				for _, d := range l {
+					if d.Engine == engine {
+						b.WriteString(d.Name + "\n")
+					}
+				}
+				return b.String(), nil
+			}
+			return "", nil
+		}
 	}
 
 	_ = os.Remove(*sock)
@@ -92,6 +119,22 @@ func handler(m *dbmanager.Manager, tm *tasks.Manager) http.Handler {
 		var in struct{ Version string }
 		_ = json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<12)).Decode(&in)
 		t, err := m.InstallEngine(r.PathValue("engine"), in.Version)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		out(w, 202, map[string]any{"data": t})
+	})
+	mux.HandleFunc("GET /v1/engines/{engine}/stats", func(w http.ResponseWriter, r *http.Request) {
+		st, err := m.Stats(r.PathValue("engine"))
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		out(w, 200, map[string]any{"data": st})
+	})
+	mux.HandleFunc("POST /v1/engines/{engine}/remove", func(w http.ResponseWriter, r *http.Request) {
+		t, err := m.RemoveEngine(r.PathValue("engine"))
 		if err != nil {
 			fail(w, err)
 			return

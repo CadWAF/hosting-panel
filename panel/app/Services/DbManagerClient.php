@@ -20,6 +20,16 @@ class DbManagerClient extends ServiceClient
         return $this->call('POST', "/v1/engines/$engine/install", ['version' => $version]);
     }
 
+    public function engineStats(string $engine): array
+    {
+        return $this->call('GET', '/v1/engines/'.rawurlencode($engine).'/stats')['data'] ?? [];
+    }
+
+    public function removeEngine(string $engine): array
+    {
+        return $this->call('POST', '/v1/engines/'.rawurlencode($engine).'/remove');
+    }
+
     public function databases(): array
     {
         return $this->call('GET', '/v1/databases')['data'] ?? [];
