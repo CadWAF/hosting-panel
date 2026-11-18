@@ -178,6 +178,16 @@ class SystemClient extends ServiceClient
         return $this->call('POST', '/v1/cadwaf/install', ['allow_ip' => $allowIp]);
     }
 
+    public function cadwafRelease(bool $refresh = false): array
+    {
+        return $this->call('GET', '/v1/cadwaf/release'.($refresh ? '?refresh=1' : ''))['data'] ?? [];
+    }
+
+    public function updateCadwaf(): array
+    {
+        return $this->call('POST', '/v1/cadwaf/update');
+    }
+
     public function removeCadwaf(): array
     {
         return $this->call('POST', '/v1/cadwaf/remove');

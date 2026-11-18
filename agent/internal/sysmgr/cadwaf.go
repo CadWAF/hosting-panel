@@ -353,9 +353,6 @@ func (m *Manager) InstallCadWAF(allowIP string) (store.Task, error) {
 	if m.cwInstalled() {
 		return store.Task{}, fmt.Errorf("%w: already installed", ErrConflict)
 	}
-	if !m.cwBundled() {
-		return store.Task{}, invalid("the firewall installer is not on this server; reinstall the Panel from a build that includes it")
-	}
 	allowIP = strings.TrimSpace(allowIP)
 	if allowIP != "" && !validIPOrNet(allowIP) {
 		return store.Task{}, invalid("allowed address")
@@ -378,16 +375,36 @@ func (m *Manager) InstallCadWAF(allowIP string) (store.Task, error) {
 				return err
 			}
 		}
-		l.Printf("Copying binaries")
+		version := "0.3.0"
+		fromNet := false
 		if m.Root == "" {
-			for _, b := range []string{"firewalld", "firewallctl"} {
-				if err := m.Run.RunW(l, "install", "-m", "0755", filepath.Join(m.cwBundle(), b), "/usr/local/bin/"+b); err != nil {
-					return err
-				}
+			l.Printf("Looking for the newest release")
+			if r, err := fetchCWRel(true); err != nil {
+				l.Printf("Release server not reachable (%v)", err)
+			} else if nb, err := downloadCW(l, r); err != nil {
+				l.Printf("Could not use the published release: %v", err)
+			} else if err := m.putCW(nb); err != nil {
+				return err
+			} else {
+				version, fromNet = nb.version, true
+				l.Printf("Installed version %s", version)
 			}
-		} else {
-			_ = m.write(cwBin, "#!/bin/sh\n", 0o755)
-			_ = m.write(cwCtl, "#!/bin/sh\n", 0o755)
+		}
+		if !fromNet {
+			if !m.cwBundled() {
+				return fmt.Errorf("no firewall build is available: the release server could not be reached and this server has no bundled copy")
+			}
+			l.Printf("Copying the bundled binaries")
+			if m.Root == "" {
+				for _, b := range []string{"firewalld", "firewallctl"} {
+					if err := m.Run.RunW(l, "install", "-m", "0755", filepath.Join(m.cwBundle(), b), "/usr/local/bin/"+b); err != nil {
+						return err
+					}
+				}
+			} else {
+				_ = m.write(cwBin, "#!/bin/sh\n", 0o755)
+				_ = m.write(cwCtl, "#!/bin/sh\n", 0o755)
+			}
 		}
 		ssh := m.sshPort()
 		tcp, udp := m.publicPorts()
@@ -428,7 +445,7 @@ func (m *Manager) InstallCadWAF(allowIP string) (store.Task, error) {
 		if err := m.write(cwUnit, cwUnitFile, 0o644); err != nil {
 			return err
 		}
-		_ = m.write(cwVersion, "0.3.0\n", 0o644)
+		_ = m.write(cwVersion, version+"\n", 0o644)
 		l.Printf("Inbound ports allowed at first start: TCP %s", joinPorts(tcpIn))
 		if allowIP != "" {
 			l.Printf("Allow-listed your address %s", allowIP)

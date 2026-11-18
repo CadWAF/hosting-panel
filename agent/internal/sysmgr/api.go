@@ -141,6 +141,13 @@ func (m *Manager) Handler() http.Handler {
 			done(w, 202, t, err)
 		}
 	})
+	mux.HandleFunc("GET /v1/cadwaf/release", func(w http.ResponseWriter, r *http.Request) {
+		respond(w, 200, map[string]any{"data": m.CadWAFRelease(r.URL.Query().Get("refresh") == "1")})
+	})
+	mux.HandleFunc("POST /v1/cadwaf/update", func(w http.ResponseWriter, r *http.Request) {
+		t, err := m.UpdateCadWAF()
+		done(w, 202, t, err)
+	})
 	mux.HandleFunc("POST /v1/cadwaf/remove", func(w http.ResponseWriter, r *http.Request) {
 		t, err := m.RemoveCadWAF()
 		done(w, 202, t, err)

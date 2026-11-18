@@ -28,7 +28,7 @@ class RpcController extends Controller
         'system' => [SystemClient::class, ['stats', 'docker', 'services', 'installSoftware', 'removeSoftware', 'serviceAction', 'setJail', 'setF2bDefaults', 'ban', 'unban',
             'enableFirewall', 'disableFirewall', 'addRule', 'deleteRule', 'setSsh', 'checkUpdates', 'applyUpdates', 'reboot', 'addCron', 'updateCron',
             'deleteCron', 'runCron', 'readLog', 'runContainer', 'containerAction', 'containerLog', 'pullImage', 'removeImage', 'addFtp',
-            'setFtpPassword', 'deleteFtp', 'openFtpPorts', 'cadwaf', 'installCadwaf', 'removeCadwaf', 'setCadwafPorts', 'addCadwafIp',
+            'setFtpPassword', 'deleteFtp', 'openFtpPorts', 'cadwaf', 'installCadwaf', 'updateCadwaf', 'cadwafRelease', 'removeCadwaf', 'setCadwafPorts', 'addCadwafIp',
             'deleteCadwafIp', 'addCadwafRule', 'deleteCadwafRule', 'reloadCadwaf', 'setCadwafEgress', 'cadwafService', 'task']],
         'mail' => [MailClient::class, ['saveSettings', 'install', 'addDomain', 'deleteDomain', 'dns', 'addMailbox', 'setPassword', 'deleteMailbox', 'webmail', 'task']],
     ];

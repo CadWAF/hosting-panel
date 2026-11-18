@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { ActivityIcon, DownloadIcon, PlusIcon, RefreshCwIcon, ShieldAlertIcon, Trash2Icon } from '@lucide/vue';
+import { ActivityIcon, DownloadIcon, ExternalLinkIcon, PlusIcon, RefreshCwIcon, ShieldAlertIcon, Trash2Icon } from '@lucide/vue';
 import ConfirmDialog from '@/components/app/ConfirmDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,22 @@ const allowMe = ref(true);
 const installOpen = ref(false);
 async function install() {
     const r = await run(() => act(rpc('system', 'installCadwaf', allowMe.value ? props.clientIp : '')));
+    if (r.ok) emit('started', r.data?.id);
+}
+// ---- updates (published releases of the open-source firewall) ----
+interface Rel { current: string; latest: string; available: boolean; notes: string; url: string; error?: string }
+const rel = ref<Rel | null>(null);
+const checking = ref(false);
+const updateOpen = ref(false);
+async function checkRelease(refresh = false) {
+    checking.value = true;
+    const r = await rpc('system', 'cadwafRelease', refresh);
+    checking.value = false;
+    if (r.ok) rel.value = r.data as Rel;
+}
+onMounted(() => { if (props.cadwaf.installed) checkRelease(); });
+async function update() {
+    const r = await run(() => act(rpc('system', 'updateCadwaf')));
     if (r.ok) emit('started', r.data?.id);
 }
 const removeOpen = ref(false);
@@ -140,8 +156,8 @@ const num = (n: number) => n.toLocaleString();
             </ul>
             <Field v-if="clientIp" orientation="horizontal"><Switch id="cw-me" v-model="allowMe" /><FieldLabel for="cw-me">{{ t('Always allow my address') }} ({{ clientIp }})</FieldLabel></Field>
             <p v-if="c.ufw_active" class="text-warning text-sm" role="alert">{{ t('UFW is switched on. Both firewalls would filter. Turn UFW off once you have checked that CadWAF works.') }}</p>
-            <p v-if="!c.bundled" class="text-destructive text-sm" role="alert">{{ t('The installer is not on this server. Reinstall the panel from a build that includes it.') }}</p>
-            <div><Button :disabled="!c.bundled || busyTask || busy" @click="installOpen = true"><DownloadIcon /> {{ t('Install CadWAF Firewall') }}</Button></div>
+            <p class="text-muted-foreground text-xs">{{ t('The newest published release is downloaded from github.com/CadWAF/firewall and its checksum is verified.') }}</p>
+            <div><Button :disabled="busyTask || busy" @click="installOpen = true"><DownloadIcon /> {{ t('Install CadWAF Firewall') }}</Button></div>
         </CardContent>
     </Card>
 
@@ -162,6 +178,18 @@ const num = (n: number) => n.toLocaleString();
                 <Button variant="outline" size="icon" class="text-destructive" :aria-label="t('Remove')" :disabled="busy || busyTask" @click="removeOpen = true"><Trash2Icon /></Button>
             </div>
         </CardContent></Card>
+        <Card v-if="rel?.available" class="border-primary/40 py-4"><CardContent class="flex flex-wrap items-center justify-between gap-3 px-5">
+            <div>
+                <p class="font-semibold">{{ t('Version {version} is available', { version: rel.latest }) }}</p>
+                <p class="text-muted-foreground text-sm">{{ t('Installed: {version}. The old version is restored automatically if the new one does not start.', { version: rel.current || '?' }) }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <Button v-if="rel.url" variant="outline" as="a" :href="rel.url" target="_blank" rel="noopener noreferrer"><ExternalLinkIcon /> {{ t('Release notes') }}</Button>
+                <Button :disabled="busy || busyTask" @click="updateOpen = true"><DownloadIcon /> {{ t('Update') }}</Button>
+            </div>
+        </CardContent></Card>
+        <p v-else-if="rel && !rel.error" class="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">{{ t('CadWAF is up to date ({version}).', { version: rel.current || rel.latest }) }} <Button variant="link" size="sm" class="h-auto p-0" :disabled="checking" @click="checkRelease(true)">{{ t('Check again') }}</Button></p>
+        <p v-else-if="rel?.error" class="text-muted-foreground text-sm">{{ rel.error }} <Button variant="link" size="sm" class="h-auto p-0" :disabled="checking" @click="checkRelease(true)">{{ t('Check again') }}</Button></p>
         <p v-if="c.error" class="text-destructive text-sm" role="alert">{{ c.error }}</p>
         <p v-if="c.status === 'degraded'" class="text-warning text-sm" role="alert">{{ t('The firewall reports its rule tables are out of step. Use Reload rules.') }}</p>
         <p v-if="c.ufw_active" class="text-warning text-sm" role="alert">{{ t('UFW is also switched on. Both firewalls filter traffic; turn one off in its tab.') }}</p>
@@ -256,6 +284,7 @@ const num = (n: number) => n.toLocaleString();
         </Card>
     </div>
 
+    <ConfirmDialog v-model:open="updateOpen" :title="t('Update CadWAF Firewall?')" :description="t('The firewall restarts for a moment. Keep a second SSH session open. The previous version is put back if the new one fails to start.')" :confirm-label="t('Update')" @confirm="update" />
     <ConfirmDialog v-model:open="installOpen" :title="t('Install CadWAF Firewall?')" :description="t('It starts filtering right away. Keep a second SSH session open the first time. If you get locked out, the hosting provider console can run the recovery script.')" :confirm-label="t('Install')" @confirm="install" />
     <ConfirmDialog v-model:open="detachOpen" :title="t('Switch the firewall off?')" :description="t('The firewall stops and its filters are removed, so all ports are reachable until you start it again.')" :confirm-label="t('Switch off')" @confirm="service('detach', t('Firewall switched off'))" />
     <ConfirmDialog v-model:open="removeOpen" :title="t('Remove CadWAF Firewall?')" :description="t('The program is removed and filtering stops. Your allow, block and port lists are kept.')" :confirm-label="t('Remove')" @confirm="remove" />

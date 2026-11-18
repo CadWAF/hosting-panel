@@ -717,5 +717,13 @@ const ru: Record<string, string> = {
     "Kernel-level default-deny firewall (XDP) with port rules, allow/block lists and a drop log. An alternative to UFW.": "Файрвол уровня ядра (XDP) с запретом по умолчанию, правилами портов, белым и чёрным списками и журналом отклонённых пакетов. Альтернатива UFW.",
     "Set up from Security: it needs your confirmation so it cannot lock you out.": "Настраивается в разделе «Безопасность»: нужно ваше подтверждение, чтобы он не заблокировал вам доступ.",
     "Redirect type": "Тип редиректа",
+    "The newest published release is downloaded from github.com/CadWAF/firewall and its checksum is verified.": "Последний опубликованный релиз скачивается с github.com/CadWAF/firewall, его контрольная сумма проверяется.",
+    "Version {version} is available": "Доступна версия {version}",
+    "Installed: {version}. The old version is restored automatically if the new one does not start.": "Установлена: {version}. Если новая версия не запустится, старая вернётся автоматически.",
+    "Release notes": "Что нового",
+    "Update": "Обновить",
+    "CadWAF is up to date ({version}).": "CadWAF актуален ({version}).",
+    "Update CadWAF Firewall?": "Обновить CadWAF Firewall?",
+    "The firewall restarts for a moment. Keep a second SSH session open. The previous version is put back if the new one fails to start.": "Файрвол ненадолго перезапустится. Держите открытой вторую SSH-сессию. Если новая версия не запустится, вернётся предыдущая.",
 };
 export default ru;
